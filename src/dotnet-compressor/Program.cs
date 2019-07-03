@@ -1,4 +1,5 @@
 ﻿using System;
+using McMaster.Extensions.CommandLineUtils;
 
 namespace dotnet_compressor
 {
