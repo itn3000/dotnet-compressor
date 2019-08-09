@@ -12,11 +12,11 @@ namespace dotnet_compressor
     {
         public static Encoding GetEncodingFromName(string name, Encoding defaultEncoding = null)
         {
-            if(defaultEncoding == null)
+            if (defaultEncoding == null)
             {
                 defaultEncoding = Encoding.Default;
             }
-            if(int.TryParse(name, out var cp))
+            if (int.TryParse(name, out var cp))
             {
                 return Encoding.GetEncoding(cp);
             }
@@ -27,13 +27,13 @@ namespace dotnet_compressor
         }
         public static Stream OpenOutputStream(string filePath, bool createNew)
         {
-            if(string.IsNullOrEmpty(filePath))
+            if (string.IsNullOrEmpty(filePath))
             {
                 return Console.OpenStandardOutput();
             }
             else
             {
-                if(createNew)
+                if (createNew)
                 {
                     return File.Create(filePath);
                 }
@@ -45,7 +45,7 @@ namespace dotnet_compressor
         }
         public static Stream OpenInputStream(string filePath)
         {
-            if(string.IsNullOrEmpty(filePath))
+            if (string.IsNullOrEmpty(filePath))
             {
                 return Console.OpenStandardInput();
             }
@@ -57,24 +57,24 @@ namespace dotnet_compressor
         public static IEnumerable<(string Path, string Stem)> GetFileList(string basedir, string[] includes, string[] excludes, bool ignoreCase)
         {
             var matcher = new Microsoft.Extensions.FileSystemGlobbing.Matcher(ignoreCase ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture);
-            if(excludes != null)
+            if (excludes != null)
             {
-            foreach(var exclude in excludes)
-            {
-                matcher.AddExclude(exclude);
+                foreach (var exclude in excludes)
+                {
+                    matcher.AddExclude(exclude);
+                }
             }
-            }
-            if(includes != null)
+            if (includes != null)
             {
-            foreach(var include in includes)
-            {
-                matcher.AddInclude(include);
-            }
+                foreach (var include in includes)
+                {
+                    matcher.AddInclude(include);
+                }
             }
             var di = new DirectoryInfo(basedir);
             var diwrapper = new DirectoryInfoWrapper(di);
             var result = matcher.Execute(diwrapper);
-            if(result.HasMatches)
+            if (!result.HasMatches)
             {
                 return Array.Empty<(string, string)>();
             }

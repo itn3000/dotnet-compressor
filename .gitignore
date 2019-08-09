@@ -345,3 +345,4 @@ MigrationBackup/
 
 .vscode/
 dotnet-compressor.sln
+*.zip
