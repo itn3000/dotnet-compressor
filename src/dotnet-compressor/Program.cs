@@ -4,6 +4,7 @@ using McMaster.Extensions.CommandLineUtils;
 namespace dotnet_compressor
 {
     [Subcommand(typeof(Zip.ZipCommand))]
+    [Subcommand(typeof(Tar.TarCommand))]
     class RootCommand
     {
         public void OnExecute(CommandLineApplication<RootCommand> application)

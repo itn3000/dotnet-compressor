@@ -22,7 +22,14 @@ namespace dotnet_compressor
             }
             else
             {
-                return Encoding.GetEncoding(name);
+                if (!string.IsNullOrEmpty(name))
+                {
+                    return Encoding.GetEncoding(name);
+                }
+                else
+                {
+                    return defaultEncoding;
+                }
             }
         }
         public static Stream OpenOutputStream(string filePath, bool createNew)
