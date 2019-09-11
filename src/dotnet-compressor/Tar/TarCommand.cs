@@ -22,7 +22,11 @@ namespace dotnet_compressor.Tar
     [HelpOption]
     class TarCommand
     {
-
+        public void OnExecute(CommandLineApplication<TarCommand> application, IConsole con)
+        {
+            con.Error.WriteLine("you must specify compress or decompress subcommand");
+            con.Error.WriteLine(application.GetHelpText());
+        }
     }
     [Command("d", "decompress", "decompresstar", Description = "extracting tar archive")]
     [HelpOption]
@@ -180,6 +184,20 @@ namespace dotnet_compressor.Tar
             {
                 con.Error.WriteLine($"failed to creating tar archive:{e}");
                 return 1;
+            }
+        }
+        void BySharpZipLib()
+        {
+            using(var stm = new MemoryStream())
+            using(var ar = new ICSharpCode.SharpZipLib.Tar.TarInputStream(stm))
+            {
+                do
+                {
+                    var entry = ar.GetNextEntry();
+                    if(entry != null)
+                    {
+                    }
+                }while(true);
             }
         }
     }

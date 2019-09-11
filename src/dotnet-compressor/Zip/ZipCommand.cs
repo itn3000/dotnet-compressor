@@ -10,6 +10,7 @@ using SharpCompress.Crypto;
 using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
+using Mono.Posix;
 
 namespace dotnet_compressor.Zip
 {
@@ -29,14 +30,21 @@ namespace dotnet_compressor.Zip
     [HelpOption]
     class ZipDecompressCommand
     {
+        [Option("-i|--input=<INPUT_FILE_PATH>", "input file path(default: stdin)", CommandOptionType.SingleValue)]
         public string InputPath { get; set; }
+        [Option("-o|--output=<OUTPUT_DIRECTORY>", "output directory path(default: current directory)", CommandOptionType.SingleValue)]
         public string OutputDirectory { get; set; }
+        [Option("--include=<INCLUDE_PATTERN>", "extracting file include pattern(default: **/*)", CommandOptionType.MultipleValue)]
         public string[] Includes { get; set; }
+        [Option("--exclude=<EXCLUDE_FILE_PATTERN>", "extracting file exclude pattern(default: none)", CommandOptionType.MultipleValue)]
         public string[] Excludes { get; set; }
+        [Option("-p|--passenv=<PASSWORD_ENVIRONMENT_NAME>", "zip password", CommandOptionType.SingleValue)]
         public string PassEnvironmentName { get; set; }
+        [Option("-e|--encoding=<FILENAME_ENCODING>", "filename encoding in archive(default: utf-8)", CommandOptionType.SingleValue)]
         public string FileNameEncoding { get; set; }
-        public bool Encryption { get; set; }
-        public void OnExecute()
+        [Option("-l|--list", "output file list only then exit", CommandOptionType.NoValue)]
+        public bool ListOnly { get; set; }
+        public void OnExecute(IConsole console)
         {
             var outdir = !string.IsNullOrEmpty(OutputDirectory) ? OutputDirectory : Directory.GetCurrentDirectory();
             using (var istm = Util.OpenInputStream(InputPath))
@@ -54,6 +62,11 @@ namespace dotnet_compressor.Zip
                 {
                     while (reader.MoveToNextEntry())
                     {
+                        if (ListOnly)
+                        {
+                            console.WriteLine(reader.Entry.Key);
+                            continue;
+                        }
                         if (reader.Entry.IsDirectory)
                         {
                             var outdi = new DirectoryInfo(Path.Combine(outdir, reader.Entry.Key));
@@ -104,60 +117,60 @@ namespace dotnet_compressor.Zip
         public bool Encryption { get; set; }
         [Option("--case-sensitive", "flag for case sensitivity on includes and excludes option(default: false)", CommandOptionType.NoValue)]
         public bool CaseSensitive { get; set; }
-        [Option("--zip64", "use zip64 format explicitly(default: auto)", CommandOptionType.NoValue)]
-        public bool UseZip64 { get; set; }
+        [Option("--level=<COMPRESSION_LEVEL>", "compression level(between 1 and 9)", CommandOptionType.SingleValue)]
+        public byte CompressionLevel { get; set; }
         public int OnExecute(IConsole console)
         {
             try
             {
+                ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8).CodePage;
                 var basePath = !string.IsNullOrEmpty(BasePath) ? BasePath : Directory.GetCurrentDirectory();
-                using (var dest = Util.OpenOutputStream(OutputPath, true))
-                // using (var zstm = new ZipOutputStream(dest))
+                using(var ostm = Util.OpenOutputStream(OutputPath, true))
+                using(var zstm = new ZipOutputStream(ostm))
                 {
-                    var zf = new ZipFile(dest);
-                    if (Encryption)
+                    if(CompressionLevel > 0)
                     {
-                        zf.Password = Environment.GetEnvironmentVariable(PassEnvironmentName);
+                        zstm.SetLevel(CompressionLevel);
                     }
-                    foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
+                    foreach(var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
                     {
                         var fi = new FileInfo(Path.Combine(basePath, path));
-                        var zentry = zf.EntryFactory.MakeFileEntry(fi.Name, stem, true);
-                        zentry.CompressionMethod = CompressionMethod.Deflated;
+                        var entryName = ZipEntry.CleanName(stem);
+                        var zentry = new ZipEntry(entryName);
+                        console.Error.WriteLine($"{path} -> {entryName}");
                         zentry.DateTime = fi.LastWriteTime;
-                        zf.BeginUpdate();
-                        zf.Add(fi.FullName, stem);
-                        zf.CommitUpdate();
-                        // zstm.PutNextEntry(zentry);
-                        // console.Error.WriteLine($"{path} -> {stem}({zentry.Name})");
-                        // using (var istm = fi.OpenRead())
-                        // {
-                        //     istm.CopyTo(zstm);
-                        // }
+                        zentry.Size = fi.Length;
+                        zstm.PutNextEntry(zentry);
+                        using(var istm = fi.OpenRead())
+                        {
+                            istm.CopyTo(zstm);
+                        }
+                        zstm.CloseEntry();
                     }
-                    zf.Close();
-                    // zstm.SetLevel(5);
-                    // Includes = Includes ?? new string[] { "**/*" };
-                    // Console.Error.WriteLine($"basepath = {basePath}, Includes = {string.Join("|", Includes)}, CaseSensitive={CaseSensitive}");
-                    // ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding).WindowsCodePage;
-                    // if (Encryption)
-                    // {
-                    //     zstm.Password = Environment.GetEnvironmentVariable(PassEnvironmentName);
-                    // }
-                    // foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
-                    // {
-                    //     var fi = new FileInfo(Path.Combine(basePath, path));
-                    //     var zentry = new ZipEntry(stem.Replace('/', '\\'));
-                    //     zentry.CompressionMethod = CompressionMethod.Deflated;
-                    //     zentry.DateTime = fi.LastWriteTime;
-                    //     zstm.PutNextEntry(zentry);
-                    //     console.Error.WriteLine($"{path} -> {stem}({zentry.Name})");
-                    //     using (var istm = fi.OpenRead())
-                    //     {
-                    //         istm.CopyTo(zstm);
-                    //     }
-                    // }
                 }
+                // var wopt = new SharpCompress.Writers.Zip.ZipWriterOptions(CompressionType.Deflate);
+                // wopt.ArchiveEncoding = new ArchiveEncoding()
+                // {
+                //     Default = Util.GetEncodingFromName(FileNameEncoding)
+                // };
+                // wopt.UseZip64 = UseZip64;
+                // using (var dest = Util.OpenOutputStream(OutputPath, true))
+                // using (var zw = new ZipWriter(dest, wopt))
+                // {
+                //     Includes = Includes ?? new string[] { "**/*" };
+                //     Console.Error.WriteLine($"basepath = {basePath}, Includes = {string.Join("|", Includes)}, CaseSensitive={CaseSensitive}");
+                //     foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
+                //     {
+                //         Console.Error.WriteLine($"compressing {path}, {stem}");
+                //         var fi = new FileInfo(Path.Combine(basePath, path));
+                //         var modTime = fi.LastWriteTime;
+                //         using (var istm = File.OpenRead(fi.FullName))
+                //         {
+                //             var zwopt = new ZipWriterEntryOptions();
+                //             zw.Write(stem, istm, modTime);
+                //         }
+                //     }
+                // }
                 return 0;
             }
             catch (Exception e)
@@ -165,39 +178,6 @@ namespace dotnet_compressor.Zip
                 console.Error.WriteLine($"failed to creating zip archive:{e}");
                 return 1;
             }
-            // try
-            // {
-            //     var basePath = !string.IsNullOrEmpty(BasePath) ? BasePath : Directory.GetCurrentDirectory();
-            //     var wopt = new SharpCompress.Writers.Zip.ZipWriterOptions(CompressionType.Deflate);
-            //     wopt.ArchiveEncoding = new ArchiveEncoding()
-            //     {
-            //         Default = Util.GetEncodingFromName(FileNameEncoding)
-            //     };
-            //     wopt.UseZip64 = UseZip64;
-            //     using (var dest = Util.OpenOutputStream(OutputPath, true))
-            //     using (var zw = new ZipWriter(dest, wopt))
-            //     {
-            //         Includes = Includes ?? new string[] { "**/*" };
-            //         Console.Error.WriteLine($"basepath = {basePath}, Includes = {string.Join("|", Includes)}, CaseSensitive={CaseSensitive}");
-            //         foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
-            //         {
-            //             Console.Error.WriteLine($"compressing {path}");
-            //             var fi = new FileInfo(Path.Combine(basePath, path));
-            //             var modTime = fi.LastWriteTime;
-            //             using (var istm = File.OpenRead(fi.FullName))
-            //             {
-            //                 var zwopt = new ZipWriterEntryOptions();
-            //                 zw.Write(path, istm, modTime);
-            //             }
-            //         }
-            //     }
-            //     return 0;
-            // }
-            // catch (Exception e)
-            // {
-            //     console.Error.WriteLine($"failed to creating zip archive:{e}");
-            //     return 1;
-            // }
         }
     }
 }
