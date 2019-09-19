@@ -118,7 +118,8 @@ namespace dotnet_compressor.Zip
         [Option("--case-sensitive", "flag for case sensitivity on includes and excludes option(default: false)", CommandOptionType.NoValue)]
         public bool CaseSensitive { get; set; }
         [Option("--level=<COMPRESSION_LEVEL>", "compression level(between 1 and 9)", CommandOptionType.SingleValue)]
-        public byte CompressionLevel { get; set; }
+        public string CompressionLevelString { get; set; }
+        int CompressionLevel => !string.IsNullOrEmpty(CompressionLevelString) ? int.Parse(CompressionLevelString) : 0;
         public int OnExecute(IConsole console)
         {
             try
