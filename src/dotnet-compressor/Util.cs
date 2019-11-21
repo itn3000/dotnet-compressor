@@ -90,5 +90,24 @@ namespace dotnet_compressor
                 return result.Files.Select(x => (x.Path, x.Stem));
             }
         }
+        public static string GetPasswordString(string password, string passEnvironmentName)
+        {
+            if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(passEnvironmentName))
+            {
+                throw new Exception("cannot use both '--password' and '--passenv' option");
+            }
+            if (!string.IsNullOrEmpty(password))
+            {
+                return password;
+            }
+            else if (!string.IsNullOrEmpty(passEnvironmentName))
+            {
+                return Environment.GetEnvironmentVariable(passEnvironmentName);
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
 }

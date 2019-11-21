@@ -5,6 +5,10 @@ namespace dotnet_compressor
 {
     [Subcommand(typeof(Zip.ZipCommand))]
     [Subcommand(typeof(Tar.TarCommand))]
+    [Subcommand(typeof(GZipCommand))]
+    [Subcommand(typeof(BZip2Command))]
+    [Subcommand(typeof(LZipCommand))]
+    [Subcommand(typeof(XzCommand))]
     class RootCommand
     {
         public void OnExecute(CommandLineApplication<RootCommand> application)
@@ -19,6 +23,7 @@ namespace dotnet_compressor
         {
             try
             {
+                System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
                 var rc = CommandLineApplication.Execute<RootCommand>(args);
                 return rc;
             }

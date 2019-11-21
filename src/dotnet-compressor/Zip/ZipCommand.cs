@@ -10,6 +10,7 @@ using SharpCompress.Crypto;
 using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
+using System.IO.Compression;
 using Mono.Posix;
 
 namespace dotnet_compressor.Zip
@@ -38,7 +39,9 @@ namespace dotnet_compressor.Zip
         public string[] Includes { get; set; }
         [Option("--exclude=<EXCLUDE_FILE_PATTERN>", "extracting file exclude pattern(default: none)", CommandOptionType.MultipleValue)]
         public string[] Excludes { get; set; }
-        [Option("-p|--passenv=<PASSWORD_ENVIRONMENT_NAME>", "zip password", CommandOptionType.SingleValue)]
+        [Option("-p|--password <PASSWORD>", "encryption password, cannot use with --passenv option(default: none)", CommandOptionType.SingleValue)]
+        public string Password { get; set; }
+        [Option("--passenv <ENVIRONMENT_NAME>", "encryption password environment name, cannot use with --pass option(default: none)", CommandOptionType.SingleValue)]
         public string PassEnvironmentName { get; set; }
         [Option("-e|--encoding=<FILENAME_ENCODING>", "filename encoding in archive(default: utf-8)", CommandOptionType.SingleValue)]
         public string FileNameEncoding { get; set; }
@@ -47,49 +50,58 @@ namespace dotnet_compressor.Zip
         public void OnExecute(IConsole console)
         {
             var outdir = !string.IsNullOrEmpty(OutputDirectory) ? OutputDirectory : Directory.GetCurrentDirectory();
+            ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding).CodePage;
             using (var istm = Util.OpenInputStream(InputPath))
+            using (var zstm = new ZipInputStream(istm))
             {
-                var ropt = new SharpCompress.Readers.ReaderOptions();
-                ropt.ArchiveEncoding = new ArchiveEncoding()
+                zstm.Password = Util.GetPasswordString(Password, PassEnvironmentName);
+                var buf = new byte[8192];
+                while (true)
                 {
-                    Default = Util.GetEncodingFromName(FileNameEncoding)
-                };
-                if (!string.IsNullOrEmpty(PassEnvironmentName))
-                {
-                    ropt.Password = Environment.GetEnvironmentVariable(PassEnvironmentName);
-                }
-                using (var reader = SharpCompress.Readers.Zip.ZipReader.Open(istm, ropt))
-                {
-                    while (reader.MoveToNextEntry())
+                    var entry = zstm.GetNextEntry();
+                    if (entry == null)
                     {
-                        if (ListOnly)
+                        break;
+                    }
+                    if (ListOnly)
+                    {
+                        console.WriteLine($"{entry.Name}");
+                    }
+                    else if (entry.IsDirectory)
+                    {
+                        Directory.CreateDirectory(Path.Combine(outdir, entry.Name));
+                    }
+                    else if (entry.IsFile)
+                    {
+                        var fi = new FileInfo(Path.Combine(outdir, entry.Name));
+                        if (!fi.Directory.Exists)
                         {
-                            console.WriteLine(reader.Entry.Key);
-                            continue;
+                            fi.Directory.Create();
                         }
-                        if (reader.Entry.IsDirectory)
+                        console.Error.WriteLine($"extracting {entry.Name} (len={entry.Size}) to {fi.FullName}");
+                        long totalread = 0;
+                        using (var ofstm = File.Create(fi.FullName))
                         {
-                            var outdi = new DirectoryInfo(Path.Combine(outdir, reader.Entry.Key));
-                            if (!outdi.Exists)
+                            if (entry.Size >= -1)
                             {
-                                outdi.Create();
+                                while (totalread < entry.Size)
+                                {
+                                    var bytesread = zstm.Read(buf, 0, (int)Math.Min(entry.Size - totalread, buf.Length));
+                                    ofstm.Write(buf, 0, bytesread);
+                                    totalread += bytesread;
+                                }
                             }
-                        }
-                        else
-                        {
-                            var outfi = new FileInfo(Path.Combine(outdir, reader.Entry.Key));
-                            if (!outfi.Directory.Exists)
+                            else
                             {
-                                outfi.Directory.Create();
-                            }
-                            using (var ostm = File.Create(outfi.FullName))
-                            using (var entrystm = reader.OpenEntryStream())
-                            {
-                                entrystm.CopyTo(ostm);
-                            }
-                            if (reader.Entry.LastModifiedTime.HasValue)
-                            {
-                                outfi.LastWriteTime = reader.Entry.LastModifiedTime.Value;
+                                while(true)
+                                {
+                                    var bytesread = zstm.Read(buf, 0, buf.Length);
+                                    ofstm.Write(buf, 0, bytesread);
+                                    if(bytesread < buf.Length)
+                                    {
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
@@ -109,7 +121,9 @@ namespace dotnet_compressor.Zip
         public string[] Includes { get; set; }
         [Option("-x|--exclude <EXCLUDE_PATTERN>", "file exclude pattern(default: none)", CommandOptionType.MultipleValue)]
         public string[] Excludes { get; set; }
-        [Option("-p|--passenv <ENVIRONMENT_NAME>", "encryption password environment name(default: none)", CommandOptionType.SingleValue)]
+        [Option("-p|--password <PASSWORD>", "encryption password, cannot use with --passenv option(default: none)", CommandOptionType.SingleValue)]
+        public string Password { get; set; }
+        [Option("--passenv <ENVIRONMENT_NAME>", "encryption password environment name, cannot use with --pass option(default: none)", CommandOptionType.SingleValue)]
         public string PassEnvironmentName { get; set; }
         [Option("-e|--encoding <ENCODING_NAME>", "filename encoding in archive(default: system default)", CommandOptionType.SingleValue)]
         public string FileNameEncoding { get; set; }
@@ -126,14 +140,22 @@ namespace dotnet_compressor.Zip
             {
                 ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8).CodePage;
                 var basePath = !string.IsNullOrEmpty(BasePath) ? BasePath : Directory.GetCurrentDirectory();
-                using(var ostm = Util.OpenOutputStream(OutputPath, true))
-                using(var zstm = new ZipOutputStream(ostm))
+                using (var ostm = Util.OpenOutputStream(OutputPath, true))
+                using (var zstm = new ZipOutputStream(ostm))
                 {
-                    if(CompressionLevel > 0)
+                    {
+                        var pass = GetPasswordString();
+                        if (!string.IsNullOrEmpty(pass))
+                        {
+                            zstm.Password = pass;
+                        }
+                    }
+                    if (CompressionLevel > 0)
                     {
                         zstm.SetLevel(CompressionLevel);
                     }
-                    foreach(var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
+
+                    foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
                     {
                         var fi = new FileInfo(Path.Combine(basePath, path));
                         var entryName = ZipEntry.CleanName(stem);
@@ -142,7 +164,7 @@ namespace dotnet_compressor.Zip
                         zentry.DateTime = fi.LastWriteTime;
                         zentry.Size = fi.Length;
                         zstm.PutNextEntry(zentry);
-                        using(var istm = fi.OpenRead())
+                        using (var istm = fi.OpenRead())
                         {
                             istm.CopyTo(zstm);
                         }
@@ -178,6 +200,25 @@ namespace dotnet_compressor.Zip
             {
                 console.Error.WriteLine($"failed to creating zip archive:{e}");
                 return 1;
+            }
+        }
+        string GetPasswordString()
+        {
+            if (!string.IsNullOrEmpty(Password) && !string.IsNullOrEmpty(PassEnvironmentName))
+            {
+                throw new Exception("cannot use both '--password' and '--passenv' option");
+            }
+            if (!string.IsNullOrEmpty(Password))
+            {
+                return Password;
+            }
+            else if (!string.IsNullOrEmpty(PassEnvironmentName))
+            {
+                return Environment.GetEnvironmentVariable(PassEnvironmentName);
+            }
+            else
+            {
+                return null;
             }
         }
     }
