@@ -42,6 +42,7 @@ jobs:
       with:
         name: nupkg-${{matrix.rid}}
         path: dist
+      if: matrix.os == 'windows-latest'
     - name: update apt cache
       run: sudo apt-get update 
       if: matrix.os == 'ubuntu-18.04'
