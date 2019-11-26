@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
     <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
-    <PackageReference Include="SharpZipLib" Version="1.1.0" />
+    <PackageReference Include="SharpZipLib" Version="1.2.0" />
     <PackageReference Include="SharpCompress" Version="0.24.0" />
   </ItemGroup>
 
@@ -18,6 +18,12 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <RootNamespace>dotnet_compressor</RootNamespace>
+    <AssemblyName>dcomp</AssemblyName>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(WithCoreRT)' != 'true'">
+    <PackAsTool>true</PackAsTool>
   </PropertyGroup>
   <ItemGroup Condition="'$(WithCoreRT)' == 'true'">
     <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />

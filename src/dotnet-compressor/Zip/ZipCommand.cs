@@ -133,6 +133,8 @@ namespace dotnet_compressor.Zip
         public bool CaseSensitive { get; set; }
         [Option("--level=<COMPRESSION_LEVEL>", "compression level(between 1 and 9)", CommandOptionType.SingleValue)]
         public string CompressionLevelString { get; set; }
+        [Option("--prefix=<PREFIX>", "path prefix for archived file, you must end with path separator if you want to add directory prefix", CommandOptionType.SingleValue)]
+        public string Prefix { get; set; }
         int CompressionLevel => !string.IsNullOrEmpty(CompressionLevelString) ? int.Parse(CompressionLevelString) : 0;
         public int OnExecute(IConsole console)
         {
@@ -158,7 +160,7 @@ namespace dotnet_compressor.Zip
                     foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
                     {
                         var fi = new FileInfo(Path.Combine(basePath, path));
-                        var entryName = ZipEntry.CleanName(stem);
+                        var entryName = ZipEntry.CleanName(string.IsNullOrEmpty(Prefix) ? stem : Prefix + stem);
                         var zentry = new ZipEntry(entryName);
                         console.Error.WriteLine($"{path} -> {entryName}");
                         zentry.DateTime = fi.LastWriteTime;
@@ -171,29 +173,6 @@ namespace dotnet_compressor.Zip
                         zstm.CloseEntry();
                     }
                 }
-                // var wopt = new SharpCompress.Writers.Zip.ZipWriterOptions(CompressionType.Deflate);
-                // wopt.ArchiveEncoding = new ArchiveEncoding()
-                // {
-                //     Default = Util.GetEncodingFromName(FileNameEncoding)
-                // };
-                // wopt.UseZip64 = UseZip64;
-                // using (var dest = Util.OpenOutputStream(OutputPath, true))
-                // using (var zw = new ZipWriter(dest, wopt))
-                // {
-                //     Includes = Includes ?? new string[] { "**/*" };
-                //     Console.Error.WriteLine($"basepath = {basePath}, Includes = {string.Join("|", Includes)}, CaseSensitive={CaseSensitive}");
-                //     foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
-                //     {
-                //         Console.Error.WriteLine($"compressing {path}, {stem}");
-                //         var fi = new FileInfo(Path.Combine(basePath, path));
-                //         var modTime = fi.LastWriteTime;
-                //         using (var istm = File.OpenRead(fi.FullName))
-                //         {
-                //             var zwopt = new ZipWriterEntryOptions();
-                //             zw.Write(stem, istm, modTime);
-                //         }
-                //     }
-                // }
                 return 0;
             }
             catch (Exception e)

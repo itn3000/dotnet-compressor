@@ -134,6 +134,8 @@ namespace dotnet_compressor.Tar
         public string[] Excludes { get; set; }
         [Option("-e|--encoding=<ENCODING_NAME>", "file encoding name(default: utf-8)", CommandOptionType.SingleValue)]
         public string FileNameEncoding { get; set; }
+        [Option("--prefix=<PREFIX>", "path prefix, you must end with path separator if you want to add directory prefix", CommandOptionType.SingleValue)]
+        public string Prefix { get; set; }
         public int OnExecute(IConsole con)
         {
             try
@@ -167,8 +169,9 @@ namespace dotnet_compressor.Tar
                             foreach (var fileInfo in result.Files)
                             {
                                 var fi = new FileInfo(Path.Combine(di.FullName, fileInfo.Path));
-                                con.Error.WriteLine($"'{fi.FullName}' -> '{fileInfo.Path}'");
-                                tar.Write(fileInfo.Path, fi);
+                                var targetPath = string.IsNullOrEmpty(Prefix) ? fileInfo.Stem : Prefix + fileInfo.Stem;
+                                con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'");
+                                tar.Write(targetPath, fi);
                             }
                         }
                     }

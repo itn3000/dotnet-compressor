@@ -1,2 +1,10 @@
 *.cs text=auto
 *.csproj text=auto
+*.sh eol=lf
+*.sln text=auto
+*proj text=auto
+*.cake text=auto
+*.gitignore text=auto
+*.editorconfig text=auto
+*.config text=auto
+*.json text=auto

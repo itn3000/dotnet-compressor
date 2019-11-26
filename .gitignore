@@ -346,4 +346,9 @@ MigrationBackup/
 .vscode/
 dotnet-compressor.sln
 *.zip
+*.lzip
+*.gz
+*.bz2
 tmp/
+
+tools/
