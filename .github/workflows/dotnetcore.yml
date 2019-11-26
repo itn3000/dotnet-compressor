@@ -10,15 +10,15 @@ jobs:
       matrix:
         os: ["ubuntu-18.04", "windows-latest"]
         rid: ["linux-x64", "linux-x86", "win-x86", "win-x64"]
-        include:
+        exclude:
           - os: "windows-latest"
-            rid: "win-x86"
+            rid: "linux-x86"
           - os: "windows-latest"
-            rid: "win-x64"
-          - os: "ubuntu-18.04"
             rid: "linux-x64"
           - os: "ubuntu-18.04"
-            rid: "linux-x86"
+            rid: "win-x64"
+          - os: "ubuntu-18.04"
+            rid: "win-x86"
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET Core 2.1
