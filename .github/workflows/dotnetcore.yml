@@ -55,4 +55,4 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: bin-${{matrix.rid}}
-        path: dotnet-compressor/bin/Release/netcoreapp2.1/${{matrix.rid}}/native
+        path: src/dotnet-compressor/bin/Release/netcoreapp2.1/${{matrix.rid}}/native
