@@ -352,3 +352,4 @@ dotnet-compressor.sln
 tmp/
 
 tools/
+dist/

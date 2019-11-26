@@ -30,6 +30,7 @@ Task("Pack")
         {
             Configuration = Configuration,
             NoBuild = true,
+            OutputDirectory = "dist"
         };
         if(!string.IsNullOrEmpty(Runtime))
         {

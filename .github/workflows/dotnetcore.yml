@@ -37,6 +37,11 @@ jobs:
     - name: Build with dotnet
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release
       if: matrix.os == 'windows-latest'
+    - name: collect nuget package as artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: nupkg-${{matrix.rid}}
+        path: dist
     - name: update apt cache
       run: sudo apt-get update 
       if: matrix.os == 'ubuntu-18.04'
@@ -45,4 +50,8 @@ jobs:
       if: matrix.os == 'ubuntu-18.04'
     - name: build native binary
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native -Runtime=${{matrix.rid}}
-      
+    - name: collect native binary as artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: bin-${{matrix.rid}}
+        path: dotnet-compressor/bin/Release/netcoreapp2.1/${{matrix.rid}}/native
