@@ -9,6 +9,16 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-18.04", "windows-latest"]
+        rid: ["linux-x64", "linux-x86", "win-x86", "win-x64"]
+        include:
+          - os: "windows-latest"
+            rid: "win-x86"
+          - os: "windows-latest"
+            rid: "win-x64"
+          - os: "ubuntu-18.04"
+            rid: "linux-x64"
+          - os: "ubuntu-18.04"
+            rid: "linux-x86"
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET Core 2.1
@@ -25,5 +35,5 @@ jobs:
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release
       if: matrix.os == 'windows-latest'
     - name: build native binary
-      run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native
+      run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native -Runtime=${{matrix.rid}}
       
