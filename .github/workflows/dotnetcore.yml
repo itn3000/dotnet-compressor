@@ -9,11 +9,9 @@ jobs:
     strategy:
       matrix:
         os: ["ubuntu-18.04", "windows-latest"]
-        rid: ["linux-x64", "linux-x86", "win-x86", "win-x64"]
+        rid: ["linux-x64", "win-x86", "win-x64"]
         linker: ["", "clang-6.0"]
         exclude:
-          - os: "windows-latest"
-            rid: "linux-x86"
           - os: "windows-latest"
             rid: "linux-x64"
           - os: "ubuntu-18.04"
@@ -25,7 +23,7 @@ jobs:
           - os: "ubuntu-18.04"
             linker: ""
     env:
-      PLATFORMLINKER: ${{ matrix.linker }}
+      CppCompilerAndLinker: ${{ matrix.linker }}
     steps:
     - uses: actions/checkout@v1
     - name: Setup .NET Core 2.1
@@ -41,6 +39,9 @@ jobs:
     - name: Build with dotnet
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release
       if: matrix.os == 'windows-latest'
+    - name: installing prerequisit packages for corert
+      run: apt-get update && apt-get install -y libkrb5-dev zlib1g-dev
+      if: matrix.os == 'ubuntu-18.04'
     - name: build native binary
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native -Runtime=${{matrix.rid}}
       
