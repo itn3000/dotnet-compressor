@@ -49,12 +49,12 @@ Task("Native")
         props["WithCoreRT"] = new string[] { "true" };
         var msBuildSetting = new DotNetCoreMSBuildSettings()
             .WithProperty("WithCoreRT", "true")
+            .WithProperty("RuntimeIdentifier", Runtime)
             ;
         var setting = new DotNetCorePublishSettings()
         {
             Configuration = Configuration,
             MSBuildSettings = msBuildSetting,
-            Runtime = Runtime,
         };
         DotNetCorePublish("src/dotnet-compressor/dotnet-compressor.csproj", setting);
     });
