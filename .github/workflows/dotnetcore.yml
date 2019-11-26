@@ -1,0 +1,29 @@
+name: .NET Core Build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-18.04", "windows-latest"]
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup .NET Core 2.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 2.1
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.0
+    - name: restore dotnet tool
+      run: dotnet tool restore
+    - name: Build with dotnet
+      run: dotnet tool run dotnet-cake build.cake -Configuration=Release
+      if: matrix.os == "windows-latest"
+    - name: build native binary
+      run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native
+      
