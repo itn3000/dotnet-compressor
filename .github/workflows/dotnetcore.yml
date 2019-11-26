@@ -14,11 +14,11 @@ jobs:
     - name: Setup .NET Core 2.1
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 2.1
+        dotnet-version: "2.1"
     - name: Setup .NET Core
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.0
+        dotnet-version: "3.0"
     - name: restore dotnet tool
       run: dotnet tool restore
     - name: Build with dotnet
