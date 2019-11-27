@@ -61,7 +61,7 @@ jobs:
     - name: build native binary
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native -Runtime=${{matrix.rid}}
     - name: stripping binary
-      run: strip dist-bin/Release/dcomp-${{matrix.rid}}
+      run: strip dist/Release/bin/dcomp-${{matrix.rid}}
       if: matrix.os != 'windows-latest'
     - name: collect native binary as artifact
       uses: actions/upload-artifact@v1
