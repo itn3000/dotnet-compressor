@@ -29,7 +29,7 @@ jobs:
           - os: "ubuntu-18.04"
             linker: ""
           - os: "macos-latest"
-            linker: ""
+            linker: "clang-6.0"
     env:
       CppCompilerAndLinker: ${{ matrix.linker }}
     steps:
