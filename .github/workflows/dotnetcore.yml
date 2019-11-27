@@ -90,4 +90,4 @@ jobs:
           name: "bin-linux-x64"
           path: linux-x64
       - name: list files
-        run: dir /s
+        run: cmd.exe /c dir /s
