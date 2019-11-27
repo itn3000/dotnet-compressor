@@ -33,7 +33,7 @@ Task("Pack")
         {
             Configuration = Configuration,
             NoBuild = true,
-            OutputDirectory = "dist"
+            OutputDirectory = $"dist/{Configuration}/nupkg"
         };
         if(!string.IsNullOrEmpty(Runtime))
         {
@@ -81,6 +81,22 @@ Task("Native.Build")
             MSBuildSettings = msBuildSetting,
         };
         DotNetCorePublish("src/dotnet-compressor/dotnet-compressor.csproj", setting);
+        var distbindir = Directory("dist").Path.Combine(Configuration).Combine("bin");
+        if(!DirectoryExists(distbindir))
+        {
+            CreateDirectory(distbindir);
+        }
+        foreach(var f in GetFiles(Directory("src").Path
+            .Combine("dotnet-compressor")
+            .Combine("bin")
+            .Combine(Configuration)
+            .Combine("netcoreapp2.1")
+            .Combine(Runtime)
+            .Combine("native").CombineWithFilePath("*").ToString()))
+        {
+            var destfile = distbindir.CombineWithFilePath($"{f.GetFilenameWithoutExtension()}-{Runtime}{f.GetExtension()}");
+            CopyFile(f, destfile);
+        }
     });
 
 RunTarget(Target);
