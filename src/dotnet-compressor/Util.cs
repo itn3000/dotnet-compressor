@@ -71,12 +71,16 @@ namespace dotnet_compressor
                     matcher.AddExclude(exclude);
                 }
             }
-            if (includes != null)
+            if (includes != null && includes.Length != 0)
             {
                 foreach (var include in includes)
                 {
                     matcher.AddInclude(include);
                 }
+            }
+            else
+            {
+                matcher.AddInclude("**/*");
             }
             var di = new DirectoryInfo(basedir);
             var diwrapper = new DirectoryInfoWrapper(di);

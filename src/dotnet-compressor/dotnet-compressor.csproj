@@ -21,6 +21,8 @@
     <AssemblyName>dcomp</AssemblyName>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <PackageId>dotnet-compressor</PackageId>
+    <PackageVersion>0.1.0</PackageVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(WithCoreRT)' != 'true'">
     <PackAsTool>true</PackAsTool>

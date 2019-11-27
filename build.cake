@@ -1,6 +1,9 @@
+#load "nativetest.cake"
+
 var Configuration = Argument("Configuration", "Debug");
 var Target = Argument("Target", "Default");
 var Runtime = Argument("Runtime", "");
+
 
 Task("Default")
     .IsDependentOn("Pack")
@@ -39,6 +42,26 @@ Task("Pack")
         DotNetCorePack("src/dotnet-compressor/dotnet-compressor.csproj", setting);
     });
 Task("Native")
+    .IsDependentOn("Native.Build")
+    .IsDependentOn("Native.Test")
+    ;
+Task("Native.Test")
+    .IsDependentOn("Native.Build")
+    .ReportError(e =>
+    {
+        Error($"test failed: {e}");
+    });
+Task("Native.Test.Zip")
+    .IsDependeeOf("Native.Test")
+    .Does(() =>
+    {
+        TestNativeZip(Configuration, Runtime);
+    });
+Task("Native.Test.Tar")
+    .IsDependeeOf("Native.Test")
+    .Does(() => TestNativeTar(Configuration, Runtime))
+    ;
+Task("Native.Build")
     .IsDependentOn("Build")
     .Does(() =>
     {

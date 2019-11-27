@@ -77,7 +77,6 @@ namespace dotnet_compressor.Tar
                             var m = matcher.Match(tarreader.Entry.Key);
                             if (!m.HasMatches)
                             {
-                                console.Error.WriteLine($"no match, skip:{tarreader.Entry.Key}");
                                 continue;
                             }
                             if (ListOnly)
@@ -96,7 +95,7 @@ namespace dotnet_compressor.Tar
                             else
                             {
                                 var destfi = new FileInfo(Path.Combine(outdir, tarreader.Entry.Key));
-                                console.Error.WriteLine($"extracting {tarreader.Entry.Key}");
+                                console.Error.WriteLine($"extracting {tarreader.Entry.Key} to {destfi.FullName}");
                                 if (!destfi.Directory.Exists)
                                 {
                                     destfi.Directory.Create();

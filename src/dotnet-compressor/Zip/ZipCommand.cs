@@ -12,6 +12,7 @@ using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
 using System.IO.Compression;
 using Mono.Posix;
+using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace dotnet_compressor.Zip
 {
@@ -47,10 +48,28 @@ namespace dotnet_compressor.Zip
         public string FileNameEncoding { get; set; }
         [Option("-l|--list", "output file list only then exit", CommandOptionType.NoValue)]
         public bool ListOnly { get; set; }
+        Matcher GetMatcher()
+        {
+            var matcher = new Matcher(StringComparison.CurrentCultureIgnoreCase);
+            if(Includes != null && Includes.Length != 0)
+            {
+                matcher.AddIncludePatterns(Includes);
+            }
+            else
+            {
+                matcher.AddInclude("**/*");
+            }
+            if(Excludes != null && Excludes.Length != 0)
+            {
+                matcher.AddExcludePatterns(Excludes);
+            }
+            return matcher;
+        }
         public void OnExecute(IConsole console)
         {
             var outdir = !string.IsNullOrEmpty(OutputDirectory) ? OutputDirectory : Directory.GetCurrentDirectory();
             ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding).CodePage;
+            var matcher = GetMatcher();
             using (var istm = Util.OpenInputStream(InputPath))
             using (var zstm = new ZipInputStream(istm))
             {
@@ -62,6 +81,10 @@ namespace dotnet_compressor.Zip
                     if (entry == null)
                     {
                         break;
+                    }
+                    if(!matcher.Match(entry.Name).HasMatches)
+                    {
+                        continue;
                     }
                     if (ListOnly)
                     {
@@ -78,7 +101,7 @@ namespace dotnet_compressor.Zip
                         {
                             fi.Directory.Create();
                         }
-                        console.Error.WriteLine($"extracting {entry.Name} (len={entry.Size}) to {fi.FullName}");
+                        console.Error.WriteLine($"extracting {entry.Name} to {fi.FullName}");
                         long totalread = 0;
                         using (var ofstm = File.Create(fi.FullName))
                         {
