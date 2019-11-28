@@ -116,8 +116,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: nupkg/dotnet-compressor.${{ extract_tag_name.replaced }}.nupkg
-          asset_name: dotnet-compressor.${{ extract_tag_name.replaced }}.nupkg
+          asset_path: nupkg/dotnet-compressor.${{ steps.extract_tag_name.replaced }}.nupkg
+          asset_name: dotnet-compressor.${{ steps.extract_tag_name.replaced }}.nupkg
           asset_content_type: application/zip
       - name: publish snupkg as github release assets
         uses: actions/upload-release-assets@v1
@@ -125,8 +125,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: nupkg/dotnet-compressor.${{ extract_tag_name.replaced }}.snupkg
-          asset_name: dotnet-compressor.${{ extract_tag_name.replaced }}.snupkg
+          asset_path: nupkg/dotnet-compressor.${{ steps.extract_tag_name.replaced }}.snupkg
+          asset_name: dotnet-compressor.${{ steps.extract_tag_name.replaced }}.snupkg
           asset_content_type: application/zip
       - name: publish macos binary as github release assets
         uses: actions/upload-release-assets@v1
