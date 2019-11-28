@@ -3,6 +3,8 @@
 var Configuration = Argument("Configuration", "Debug");
 var Target = Argument("Target", "Default");
 var Runtime = Argument("Runtime", "");
+var VersionSuffix = Argument("VersionSuffix", "");
+var IsRelease = HasArgument("IsRelease");
 
 
 Task("Default")
@@ -21,6 +23,7 @@ Task("Build")
         var setting = new DotNetCoreBuildSettings()
         {
             Configuration = Configuration,
+            VersionSuffix = VersionSuffix,
         };
         DotNetCoreBuild("dotnet-compressor.slnproj", setting);
     });
@@ -29,11 +32,16 @@ Task("Pack")
     .IsDependentOn("Build")
     .Does(() =>
     {
+        if(!IsRelease && string.IsNullOrEmpty(VersionSuffix))
+        {
+            VersionSuffix = "alpha-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+        }
         var setting = new DotNetCorePackSettings()
         {
             Configuration = Configuration,
             NoBuild = true,
-            OutputDirectory = $"dist/{Configuration}/nupkg"
+            OutputDirectory = $"dist/{Configuration}/nupkg",
+            VersionSuffix = VersionSuffix,
         };
         if(!string.IsNullOrEmpty(Runtime))
         {
@@ -74,6 +82,7 @@ Task("Native.Build")
         var msBuildSetting = new DotNetCoreMSBuildSettings()
             .WithProperty("WithCoreRT", "true")
             .WithProperty("RuntimeIdentifier", Runtime)
+            .WithProperty("VersionSuffix", VersionSuffix)
             ;
         var setting = new DotNetCorePublishSettings()
         {

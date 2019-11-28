@@ -9,6 +9,7 @@ namespace dotnet_compressor
     [Subcommand(typeof(BZip2Command))]
     [Subcommand(typeof(LZipCommand))]
     [Subcommand(typeof(XzCommand))]
+    [VersionOptionFromMember(MemberName = "ApplicationVersion")]
     class RootCommand
     {
         public void OnExecute(CommandLineApplication<RootCommand> application)
@@ -16,6 +17,7 @@ namespace dotnet_compressor
             Console.Error.WriteLine($"you must specify subcommand");
             Console.Error.WriteLine(application.GetHelpText());
         }
+        public string ApplicationVersion => typeof(Program).Assembly.GetName().Version.ToString();
     }
     class Program
     {

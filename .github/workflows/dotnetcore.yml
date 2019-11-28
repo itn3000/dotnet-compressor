@@ -43,9 +43,17 @@ jobs:
         dotnet-version: "3.0.101"
     - name: restore dotnet tool
       run: dotnet tool restore
-    - name: Build with dotnet
+    - name: Build with dotnet(Release)
+      run: dotnet tool run dotnet-cake build.cake -Configuration=Release -IsRelease
+      if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
+    - name: Build with dotnet(Development)
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release
-      if: matrix.os == 'windows-latest'
+      if: matrix.os == 'windows-latest' && !startsWith(github.ref, 'refs/tags/')
+    - name: push development nuget package
+      run: |
+        nuget source Add -Name GitHub -Source https://nuget.pkg.github.com/itn3000/index.json -UserName itn3000 -Password ${{secrets.GITHUB_TOKEN}}
+        dotnet nuget push dist/nupkg/*.nupkg -s GitHub
+      if: matrix.os == 'windows-latest' && endsWith(github.ref, 'master')
     - name: collect nuget package as artifact
       uses: actions/upload-artifact@v1
       with:
