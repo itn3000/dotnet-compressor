@@ -82,8 +82,11 @@ Task("Native.Build")
         var msBuildSetting = new DotNetCoreMSBuildSettings()
             .WithProperty("WithCoreRT", "true")
             .WithProperty("RuntimeIdentifier", Runtime)
-            .WithProperty("VersionSuffix", VersionSuffix)
             ;
+        if(!string.IsNullOrEmpty(VersionSuffix))
+        {
+            msBuildSetting = msBuildSetting.WithProperty("VersionSuffix", VersionSuffix);
+        }
         var setting = new DotNetCorePublishSettings()
         {
             Configuration = Configuration,
