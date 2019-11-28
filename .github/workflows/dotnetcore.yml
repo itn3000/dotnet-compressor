@@ -115,7 +115,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{create_release.outputs.upload_url}}
+          upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: nupkg/dotnet-compressor.${{ extract_tag_name.replaced }}.nupkg
           asset_name: dotnet-compressor.${{ extract_tag_name.replaced }}.nupkg
           asset_content_type: application/zip
@@ -124,7 +124,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{create_release.outputs.upload_url}}
+          upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: nupkg/dotnet-compressor.${{ extract_tag_name.replaced }}.snupkg
           asset_name: dotnet-compressor.${{ extract_tag_name.replaced }}.snupkg
           asset_content_type: application/zip
@@ -133,7 +133,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{create_release.outputs.upload_url}}
+          upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: osx-x64/dcomp-osx-x64
           asset_name: dcomp-osx-x64
           asset_content_type: application/octet-binary
@@ -142,7 +142,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{create_release.outputs.upload_url}}
+          upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: linux-x64/dcomp-linux-x64
           asset_name: dcomp-linux-x64
           asset_content_type: application/octet-binary
@@ -151,7 +151,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{create_release.outputs.upload_url}}
+          upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: win-x64/dcomp-win-x64.exe
           asset_name: dcomp-win-x64.exe
           asset_content_type: application/octet-binary
@@ -160,7 +160,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{create_release.outputs.upload_url}}
+          upload_url: ${{steps.create_release.outputs.upload_url}}
           asset_path: win-x64/dcomp-win-x64.pdb
           asset_name: dcomp-win-x64.pdb
           asset_content_type: application/octet-binary
