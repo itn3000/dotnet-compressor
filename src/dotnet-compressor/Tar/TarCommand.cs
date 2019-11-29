@@ -45,6 +45,10 @@ namespace dotnet_compressor.Tar
         public string FileNameEncoding { get; set; }
         [Option("-l|--list", "list files only", CommandOptionType.NoValue)]
         public bool ListOnly { get; set; }
+        [Option("--replace-from=<REGEXP>", "replace filename regexp pattern", CommandOptionType.SingleValue)]
+        public string ReplaceFrom { get; set; }
+        [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
+        public string ReplaceTo { get; set; }
         public int OnExecute(IConsole console)
         {
             try
@@ -84,9 +88,10 @@ namespace dotnet_compressor.Tar
                                 console.WriteLine($"{tarreader.Entry.Key}");
                                 continue;
                             }
+                            var entryKey = Util.ReplaceRegexString(tarreader.Entry.Key, ReplaceFrom, ReplaceTo);
                             if (tarreader.Entry.IsDirectory)
                             {
-                                var destdir = Path.Combine(outdir, tarreader.Entry.Key);
+                                var destdir = Path.Combine(outdir, entryKey);
                                 if (!Directory.Exists(destdir))
                                 {
                                     Directory.CreateDirectory(destdir);
@@ -133,8 +138,10 @@ namespace dotnet_compressor.Tar
         public string[] Excludes { get; set; }
         [Option("-e|--encoding=<ENCODING_NAME>", "file encoding name(default: utf-8)", CommandOptionType.SingleValue)]
         public string FileNameEncoding { get; set; }
-        [Option("--prefix=<PREFIX>", "path prefix, you must end with path separator if you want to add directory prefix", CommandOptionType.SingleValue)]
-        public string Prefix { get; set; }
+        [Option("--replace-from=<REGEXP>", "replace filename regexp pattern", CommandOptionType.SingleValue)]
+        public string ReplaceFrom { get; set; }
+        [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
+        public string ReplaceTo { get; set; }
         public int OnExecute(IConsole con)
         {
             try
@@ -168,7 +175,7 @@ namespace dotnet_compressor.Tar
                             foreach (var fileInfo in result.Files)
                             {
                                 var fi = new FileInfo(Path.Combine(di.FullName, fileInfo.Path));
-                                var targetPath = string.IsNullOrEmpty(Prefix) ? fileInfo.Stem : Prefix + fileInfo.Stem;
+                                var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
                                 con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'");
                                 tar.Write(targetPath, fi);
                             }
@@ -186,20 +193,6 @@ namespace dotnet_compressor.Tar
             {
                 con.Error.WriteLine($"failed to creating tar archive:{e}");
                 return 1;
-            }
-        }
-        void BySharpZipLib()
-        {
-            using(var stm = new MemoryStream())
-            using(var ar = new ICSharpCode.SharpZipLib.Tar.TarInputStream(stm))
-            {
-                do
-                {
-                    var entry = ar.GetNextEntry();
-                    if(entry != null)
-                    {
-                    }
-                }while(true);
             }
         }
     }

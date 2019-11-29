@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace dotnet_compressor
 {
@@ -112,6 +113,14 @@ namespace dotnet_compressor
             {
                 return null;
             }
+        }
+        public static string ReplaceRegexString(string input, string pattern, string replaceto)
+        {
+            if(string.IsNullOrEmpty(pattern) || string.IsNullOrEmpty(replaceto))
+            {
+                return input;
+            }
+            return Regex.Replace(input, pattern, replaceto);
         }
     }
 }

@@ -2,6 +2,7 @@ using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using SharpCompress.Archives;
 using SharpCompress.Writers.Zip;
 using SharpCompress.Common;
@@ -48,10 +49,14 @@ namespace dotnet_compressor.Zip
         public string FileNameEncoding { get; set; }
         [Option("-l|--list", "output file list only then exit", CommandOptionType.NoValue)]
         public bool ListOnly { get; set; }
+        [Option("--replace-from=<REGEXP>", "replace filename regexp pattern", CommandOptionType.SingleValue)]
+        public string ReplaceFrom { get; set; }
+        [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
+        public string ReplaceTo { get; set; }
         Matcher GetMatcher()
         {
             var matcher = new Matcher(StringComparison.CurrentCultureIgnoreCase);
-            if(Includes != null && Includes.Length != 0)
+            if (Includes != null && Includes.Length != 0)
             {
                 matcher.AddIncludePatterns(Includes);
             }
@@ -59,7 +64,7 @@ namespace dotnet_compressor.Zip
             {
                 matcher.AddInclude("**/*");
             }
-            if(Excludes != null && Excludes.Length != 0)
+            if (Excludes != null && Excludes.Length != 0)
             {
                 matcher.AddExcludePatterns(Excludes);
             }
@@ -82,7 +87,7 @@ namespace dotnet_compressor.Zip
                     {
                         break;
                     }
-                    if(!matcher.Match(entry.Name).HasMatches)
+                    if (!matcher.Match(entry.Name).HasMatches)
                     {
                         continue;
                     }
@@ -92,11 +97,14 @@ namespace dotnet_compressor.Zip
                     }
                     else if (entry.IsDirectory)
                     {
-                        Directory.CreateDirectory(Path.Combine(outdir, entry.Name));
+                        var entryName = Util.ReplaceRegexString(entry.Name, ReplaceFrom, ReplaceTo);
+                        Directory.CreateDirectory(Path.Combine(outdir, entryName));
                     }
                     else if (entry.IsFile)
                     {
-                        var fi = new FileInfo(Path.Combine(outdir, entry.Name));
+                        var entryName = string.IsNullOrEmpty(ReplaceFrom) || string.IsNullOrEmpty(ReplaceTo) ?
+                            Regex.Replace(entry.Name, ReplaceFrom, ReplaceTo) : entry.Name;
+                        var fi = new FileInfo(Path.Combine(outdir, entryName));
                         if (!fi.Directory.Exists)
                         {
                             fi.Directory.Create();
@@ -116,11 +124,11 @@ namespace dotnet_compressor.Zip
                             }
                             else
                             {
-                                while(true)
+                                while (true)
                                 {
                                     var bytesread = zstm.Read(buf, 0, buf.Length);
                                     ofstm.Write(buf, 0, bytesread);
-                                    if(bytesread < buf.Length)
+                                    if (bytesread < buf.Length)
                                     {
                                         break;
                                     }
@@ -156,9 +164,11 @@ namespace dotnet_compressor.Zip
         public bool CaseSensitive { get; set; }
         [Option("--level=<COMPRESSION_LEVEL>", "compression level(between 1 and 9)", CommandOptionType.SingleValue)]
         public string CompressionLevelString { get; set; }
-        [Option("--prefix=<PREFIX>", "path prefix for archived file, you must end with path separator if you want to add directory prefix", CommandOptionType.SingleValue)]
-        public string Prefix { get; set; }
         int CompressionLevel => !string.IsNullOrEmpty(CompressionLevelString) ? int.Parse(CompressionLevelString) : 0;
+        [Option("--replace-from=<REGEXP>", "replace filename source regexp", CommandOptionType.SingleValue)]
+        public string ReplaceFrom { get; set; }
+        [Option("--replace-to=<REPLACE_TO>", "replace filename dest regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
+        public string ReplaceTo { get; set; }
         public int OnExecute(IConsole console)
         {
             try
@@ -183,7 +193,7 @@ namespace dotnet_compressor.Zip
                     foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
                     {
                         var fi = new FileInfo(Path.Combine(basePath, path));
-                        var entryName = ZipEntry.CleanName(string.IsNullOrEmpty(Prefix) ? stem : Prefix + stem);
+                        var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
                         var zentry = new ZipEntry(entryName);
                         console.Error.WriteLine($"{path} -> {entryName}");
                         zentry.DateTime = fi.LastWriteTime;

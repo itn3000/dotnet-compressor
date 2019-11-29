@@ -4,5 +4,6 @@
     </PropertyGroup>
     <ItemGroup>
         <Project Include="src/**/*.csproj"/>
+        <Project Include="test/**/*.csproj"/>
     </ItemGroup>
 </Project>

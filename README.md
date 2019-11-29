@@ -139,6 +139,7 @@ here are prerequisits if you want to build native binary
 * windows
     * Build tools for Visual Studio 2019(if windows)
 * ubuntu
+    * build-essential
     * libkrb5-dev
     * zlib1g-dev
     * clang
@@ -158,12 +159,12 @@ and then you will get nupkg in `dist/[Configuration]/nupkg`, binary executable i
 if you want to get single executable binary,
 you should do following steps.
 
-1. set `CppCompilerAndLinker=clang-[version]` env value if you do not use clang-3.9 and build in linux or macos.
+1. set `CppCompilerAndLinker=clang-[version]` env value if you do not have clang-3.9 and build in linux or macos.
 2. run `dotnet tool run dotnet-cake -Target=Native -Runtime=[rid] -Configuration=[Debug or Release]`
 
 [about rid, refer to this page](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog)
 
-and then you will get native binary in 
+and then you will get native executable binary in `dist/[Configuration]/bin`
 
 ## Generating sln
 
