@@ -112,10 +112,4 @@ Task("Native.Build")
         }
     });
 
-Task("NuGet")
-    .IsDependentOn("Pack")
-    .Does(() =>
-    {
-    });
-
 RunTarget(Target);
