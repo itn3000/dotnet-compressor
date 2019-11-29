@@ -50,6 +50,16 @@ Task("Pack")
         }
         DotNetCorePack("src/dotnet-compressor/dotnet-compressor.csproj", setting);
     });
+Task("SlnGen")
+    .Does(() =>
+    {
+        var msbuildSetting = new MSBuildSettings()
+        {
+            Verbosity = Verbosity.Normal
+        };
+        msbuildSetting = msbuildSetting.WithTarget("SlnGen");
+        MSBuild("dotnet-compressor.slngenproj", msbuildSetting);
+    });
 Task("Native")
     .IsDependentOn("Native.Build")
     .IsDependentOn("Native.Test")
