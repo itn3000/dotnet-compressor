@@ -23,6 +23,12 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageId>dotnet-compressor</PackageId>
     <VersionPrefix>0.1.0</VersionPrefix>
+    <PackageDescription>dotnet compression/decompression tool</PackageDescription>
+    <PackageProjectUrl>https://github.com/itn3000/dotnet-compressor</PackageProjectUrl>
+    <PackageTags>dotnet tool compress zip tar gzip bzip2 lzip</PackageTags>
+    <PackageLicenseExression>MIT</PackageLicenseExression>
+    <Authors>Itn3000</Authors>
+    <Copyright>Copyright (C) 2019 Itn3000</Copyright>
   </PropertyGroup>
   <PropertyGroup Condition="'$(WithCoreRT)' != 'true'">
     <PackAsTool>true</PackAsTool>

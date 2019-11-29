@@ -72,6 +72,12 @@ Task("NuGet.Push.GitHub")
             Information($"{f}");
         }
         NuGetPush(files, pushSettings);
+        var files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
+        foreach(var f in files)
+        {
+            Information($"{f}");
+        }
+        NuGetPush(files, pushSettings);
     });
 Task("NuGet")
     .IsDependentOn("NuGet.Push.NuGetOrg")
