@@ -124,3 +124,51 @@ you can manupilate ZIP by `zip` subcommand.
 
 * archiving files under `dir1` and compressing by gzip: `dcomp tar c -b dir1 | dcomp gz c -o dir1.tgz`
 * extracting from `dir1.tgz` into `dir1`: `dcomp gz d -i dir1.tgz|dcomp tar d -o dir1`
+
+# How to build
+
+## Prerequisits
+
+* dotnet-sdk 3.0
+* dotnet-sdk 2.1
+* mono(if linux or mac)
+* .NET Framework 4.6.1 or later(if windows)
+
+here are prerequisits if you want to build native binary
+
+* windows
+    * Build tools for Visual Studio 2019(if windows)
+* ubuntu
+    * libkrb5-dev
+    * zlib1g-dev
+    * clang
+* mac
+    * xcode
+
+## Build 
+
+1. run `dotnet tool restore`
+2. run `dotnet tool run dotnet-cake`
+    * if you want to build release binary, run `dotnet tool run dotnet-cake -Configuration=Release -IsRelease`
+
+and then you will get nupkg in `dist/[Configuration]/nupkg`, binary executable in `bin/Release/netcoreapp2.1`
+
+## Build native binary
+
+if you want to get single executable binary,
+you should do following steps.
+
+1. set `CppCompilerAndLinker=clang-[version]` env value if you do not use clang-3.9 and build in linux or macos.
+2. run `dotnet tool run dotnet-cake -Target=Native -Runtime=[rid] -Configuration=[Debug or Release]`
+
+[about rid, refer to this page](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog)
+
+and then you will get native binary in 
+
+## Generating sln
+
+sln is not existed in repo.if you want to solution file(*.sln), you should do following steps.
+
+1. run `dotnet tool run dotnet-cake -Target=SlnGen`
+
+and then you will get `dotnet-compressor.sln` file in top of the repo.
