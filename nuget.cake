@@ -58,26 +58,32 @@ Task("NuGet.Push.GitHub")
         Information($"src is {SourceName}, {SourceUrl}");
         NuGetAddSource(SourceName, SourceUrl, settings);
         Information($"source add done");
-        var pushSettings = new NuGetPushSettings()
+        var pushSettings = new DotNetCoreNuGetPushSettings()
         {
-            Source = SourceName,
+            Source = SourceName
         };
-        if(!string.IsNullOrEmpty(ApiKey))
-        {
-            pushSettings.ApiKey = ApiKey;
-        }
-        var files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
-        foreach(var f in files)
-        {
-            Information($"{f}");
-        }
-        NuGetPush(files, pushSettings);
-        files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
-        foreach(var f in files)
-        {
-            Information($"{f}");
-        }
-        NuGetPush(files, pushSettings);
+        DotNetCoreNuGetPush(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.nupkg").ToString(), pushSettings);
+        // var pushSettings = new NuGetPushSettings()
+        // {
+        //     Source = SourceName,
+        // };
+        // if(!string.IsNullOrEmpty(ApiKey))
+        // {
+        //     pushSettings.ApiKey = ApiKey;
+        // }
+        // var files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
+        // foreach(var f in files)
+        // {
+        //     Information($"{f}");
+        // }
+        // NuGetPush(files, pushSettings);
+
+        // files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
+        // foreach(var f in files)
+        // {
+        //     Information($"{f}");
+        // }
+        // NuGetPush(files, pushSettings);
     });
 Task("NuGet")
     .IsDependentOn("NuGet.Push.NuGetOrg")
