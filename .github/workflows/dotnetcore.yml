@@ -50,9 +50,7 @@ jobs:
       run: dotnet tool run dotnet-cake build.cake -Configuration=Release
       if: matrix.os == 'windows-latest' && !startsWith(github.ref, 'refs/tags/')
     - name: push development nuget package
-      run: |
-        ./tools/nuget.exe source Add -Name GitHub -Source https://nuget.pkg.github.com/itn3000/index.json -UserName itn3000 -Password ${{secrets.GITHUB_TOKEN}}
-        dotnet nuget push dist/nupkg/*.nupkg -s GitHub
+      run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=NuGet.Publish.GitHub
       if: matrix.os == 'windows-latest' && endsWith(github.ref, 'master')
     - name: collect nuget package as artifact
       uses: actions/upload-artifact@v1
@@ -67,7 +65,7 @@ jobs:
       run: sudo apt-get install -y libkrb5-dev zlib1g-dev
       if: matrix.os == 'ubuntu-18.04'
     - name: build native binary
-      run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native -Runtime=${{matrix.rid}}
+      run: dotnet tool run dotnet-cake build.cake -Configuration=Release -Target=Native -Runtime=${{matrix.rid}} -Username=itn3000 -Password=${{ secrets.GITHUB_TOKEN }}
     - name: stripping binary
       run: strip dist/Release/bin/dcomp-${{matrix.rid}}
       if: matrix.os != 'windows-latest'
@@ -173,4 +171,4 @@ jobs:
           asset_name: dcomp-win-x64.pdb
           asset_content_type: application/octet-binary
       - name: upload nupkg to nugetorg
-        run: dotnet nuget push -k ${{secrets.NUGET_API_KEY}} nupkg/*.nupkg
+        run: dotnet run tool dotnet-cake -Target=NuGet -ApiKey=${{secrets.NUGET_API_KEY}} -Configuration=Release

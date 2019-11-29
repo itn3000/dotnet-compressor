@@ -1,4 +1,5 @@
 #load "nativetest.cake"
+#load "nuget.cake"
 
 var Configuration = Argument("Configuration", "Debug");
 var Target = Argument("Target", "Default");
@@ -109,6 +110,12 @@ Task("Native.Build")
             var destfile = distbindir.CombineWithFilePath($"{f.GetFilenameWithoutExtension()}-{Runtime}{f.GetExtension()}");
             CopyFile(f, destfile);
         }
+    });
+
+Task("NuGet")
+    .IsDependentOn("Pack")
+    .Does(() =>
+    {
     });
 
 RunTarget(Target);
