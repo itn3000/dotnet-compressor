@@ -58,10 +58,6 @@ Task("NuGet.Push.GitHub")
         Information($"src is {SourceName}, {SourceUrl}");
         NuGetAddSource(SourceName, SourceUrl, settings);
         Information($"source add done");
-        var pushSettings = new DotNetCoreNuGetPushSettings()
-        {
-            Source = SourceName
-        };
         var pushSettings = new NuGetPushSettings()
         {
             Source = SourceName,
