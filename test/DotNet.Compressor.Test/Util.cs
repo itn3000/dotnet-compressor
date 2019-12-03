@@ -14,6 +14,8 @@ namespace DotNet.Compressor.Test
                 Directory.Delete(tmpDir, true);
             }
         }
+
+        public static readonly string JapaneseFileName = new string(new char[]{ (char)0x3042, (char)0x3043, (char)0x3044 }) + ".txt";
         public static (string tmpRootDir, string sampleDir) CreateTestDir(string testName)
         {
             var tmpDir = Path.Combine(Path.GetTempPath(), "dcomp-test", testName);
@@ -27,7 +29,7 @@ namespace DotNet.Compressor.Test
                 Directory.CreateDirectory(sampleDir);
             }
             // Japanese HIRAGANA LETTERs + '.txt'
-            var japaneseFileName = new string(new char[]{ (char)0x3042, (char)0x3043, (char)0x3044 }) + ".txt";
+            var japaneseFileName = JapaneseFileName;
             File.WriteAllText(Path.Combine(sampleDir, japaneseFileName), "aaaa");
             File.WriteAllText(Path.Combine(sampleDir, "abc.txt"), "hoge");
             return (tmpDir, sampleDir);

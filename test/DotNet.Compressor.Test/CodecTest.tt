@@ -1,0 +1,49 @@
+<#@ output extension=".cs"#>
+<#
+var modules = new string[]{ "BZip2", "GZip", "LZip" };
+#>
+using System.Text;
+using System.IO;
+using dotnet_compressor;
+using Xunit;
+
+namespace DotNet.Compressor.Test
+{
+<# foreach(var module in modules)
+{
+#>
+    public class TestCodec<#=module#>
+    {
+        [Fact]
+        public void Codec()
+        {
+            var testName = nameof(TestCodec<#=module#>) + nameof(Codec) + "<#=module#>";
+            var (tmpDir, sampleDir) = Util.CreateTestDir(testName);
+            try
+            {
+                var comp = new <#=module#>CompressCommand();
+                comp.InputFile = Path.Combine(sampleDir, "abc.txt");
+                comp.OutputFile = Path.Combine(tmpDir, "comp.bin");
+                comp.OnExecute(new DummyConsole());
+                Assert.True(File.Exists(comp.OutputFile));
+                var decomp = new <#=module#>DecompressCommand();
+                decomp.InputFile = comp.OutputFile;
+                decomp.OutputFile = Path.Combine(tmpDir, "decomp.bin");
+                decomp.OnExecute(new DummyConsole());
+                Assert.True(File.Exists(decomp.OutputFile));
+                var originalBytes = File.ReadAllBytes(comp.InputFile);
+                var compBytes = File.ReadAllBytes(comp.OutputFile);
+                var decBytes = File.ReadAllBytes(decomp.OutputFile);
+                Assert.Equal(originalBytes, decBytes);
+                Assert.NotEqual(decBytes, compBytes);
+            }
+            finally
+            {
+                Util.RemoveTestDir(testName);
+            }
+        }
+    }
+<#
+}
+#>
+}

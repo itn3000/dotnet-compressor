@@ -5,30 +5,25 @@ using System.IO;
 
 namespace DotNet.Compressor.Test
 {
-    public class ZipTest
+    public class TarTest
     {
-        public ZipTest()
-        {
-            System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance);
-        }
         [Theory]
         [InlineData("sjis")]
         [InlineData("utf-8")]
         [InlineData("65001")]
         public void EncodingTest(string encodingName)
         {
-            var testName = nameof(ZipTest) + "Regex" + nameof(EncodingTest) + encodingName;
+            var testName = nameof(TarTest) + "Regex" + nameof(EncodingTest) + encodingName;
             var (tmpDir, sampleDir) = Util.CreateTestDir(testName);
             try
             {
-                var cmd = new dotnet_compressor.Zip.ZipCompressCommand();
-                cmd.BasePath = sampleDir;
-                cmd.Encryption = false;
+                var cmd = new dotnet_compressor.Tar.TarCompressCommand();
+                cmd.BaseDirectory = sampleDir;
                 cmd.FileNameEncoding = encodingName;
-                cmd.OutputPath = Path.Combine(tmpDir, "test.zip");
+                cmd.OutputPath = Path.Combine(tmpDir, "test.tar");
                 cmd.OnExecute(new DummyConsole());
                 Assert.True(File.Exists(cmd.OutputPath));
-                var decomp = new dotnet_compressor.Zip.ZipDecompressCommand();
+                var decomp = new dotnet_compressor.Tar.TarDecompressCommand();
                 decomp.InputPath = cmd.OutputPath;
                 decomp.OutputDirectory = Path.Combine(tmpDir, "decomp");
                 decomp.FileNameEncoding = encodingName;
@@ -46,16 +41,15 @@ namespace DotNet.Compressor.Test
         {
             try
             {
-                var (tmpDir, sampleDir) = Util.CreateTestDir(nameof(ZipTest) + "Regex");
-                var cmd = new dotnet_compressor.Zip.ZipCompressCommand();
-                cmd.BasePath = sampleDir;
-                cmd.Encryption = false;
+                var (tmpDir, sampleDir) = Util.CreateTestDir(nameof(TarTest) + "Regex");
+                var cmd = new dotnet_compressor.Tar.TarCompressCommand();
+                cmd.BaseDirectory = sampleDir;
                 cmd.ReplaceFrom = "\\.txt$";
                 cmd.ReplaceTo = ".md";
-                cmd.OutputPath = Path.Combine(tmpDir, "test.zip");
+                cmd.OutputPath = Path.Combine(tmpDir, "test.tar");
                 cmd.OnExecute(new DummyConsole());
                 Assert.True(File.Exists(cmd.OutputPath));
-                var decomp = new dotnet_compressor.Zip.ZipDecompressCommand();
+                var decomp = new dotnet_compressor.Tar.TarDecompressCommand();
                 decomp.InputPath = cmd.OutputPath;
                 decomp.OutputDirectory = Path.Combine(tmpDir, "decomp");
                 decomp.OnExecute(new DummyConsole());
@@ -63,7 +57,7 @@ namespace DotNet.Compressor.Test
             }
             finally
             {
-                Util.RemoveTestDir(nameof(ZipTest) + "Regex");
+                Util.RemoveTestDir(nameof(TarTest) + "Regex");
             }
         }
         [Fact]
@@ -71,14 +65,13 @@ namespace DotNet.Compressor.Test
         {
             try
             {
-                var (tmpDir, sampleDir) = Util.CreateTestDir(nameof(ZipTest) + "Regex");
-                var cmd = new dotnet_compressor.Zip.ZipCompressCommand();
-                cmd.BasePath = sampleDir;
-                cmd.Encryption = false;
-                cmd.OutputPath = Path.Combine(tmpDir, "test.zip");
+                var (tmpDir, sampleDir) = Util.CreateTestDir(nameof(TarTest) + "Regex");
+                var cmd = new dotnet_compressor.Tar.TarCompressCommand();
+                cmd.BaseDirectory = sampleDir;
+                cmd.OutputPath = Path.Combine(tmpDir, "test.tar");
                 cmd.OnExecute(new DummyConsole());
                 Assert.True(File.Exists(cmd.OutputPath));
-                var decomp = new dotnet_compressor.Zip.ZipDecompressCommand();
+                var decomp = new dotnet_compressor.Tar.TarDecompressCommand();
                 decomp.InputPath = cmd.OutputPath;
                 decomp.OutputDirectory = Path.Combine(tmpDir, "decomp");
                 decomp.ReplaceFrom = "\\.txt$";
@@ -88,7 +81,7 @@ namespace DotNet.Compressor.Test
             }
             finally
             {
-                Util.RemoveTestDir(nameof(ZipTest) + "Regex");
+                Util.RemoveTestDir(nameof(TarTest) + "Regex");
             }
         }
     }

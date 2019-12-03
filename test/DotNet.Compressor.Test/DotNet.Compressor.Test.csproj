@@ -17,5 +17,16 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\dotnet-compressor\dotnet-compressor.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update="CodecTest.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CodecTest.cs</LastGenOutput>
+    </None>
+    <Compile Update="CodecTest.cs">
+        <DesignTime>True</DesignTime>
+        <AutoGen>True</AutoGen>
+        <DependentUpon>CodecTest.tt</DependentUpon>
+    </Compile>
+  </ItemGroup>
 
 </Project>

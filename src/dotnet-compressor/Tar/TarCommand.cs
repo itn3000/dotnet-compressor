@@ -99,7 +99,7 @@ namespace dotnet_compressor.Tar
                             }
                             else
                             {
-                                var destfi = new FileInfo(Path.Combine(outdir, tarreader.Entry.Key));
+                                var destfi = new FileInfo(Path.Combine(outdir, entryKey));
                                 console.Error.WriteLine($"extracting {tarreader.Entry.Key} to {destfi.FullName}");
                                 if (!destfi.Directory.Exists)
                                 {

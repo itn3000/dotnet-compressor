@@ -50,9 +50,9 @@ namespace dotnet_compressor.Zip
         [Option("-l|--list", "output file list only then exit", CommandOptionType.NoValue)]
         public bool ListOnly { get; set; }
         [Option("--replace-from=<REGEXP>", "replace filename regexp pattern", CommandOptionType.SingleValue)]
-        public string ReplaceFrom { get; set; }
+        public string ReplaceFrom { get; set; } = "";
         [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
-        public string ReplaceTo { get; set; }
+        public string ReplaceTo { get; set; } = "";
         Matcher GetMatcher()
         {
             var matcher = new Matcher(StringComparison.CurrentCultureIgnoreCase);
@@ -102,7 +102,7 @@ namespace dotnet_compressor.Zip
                     }
                     else if (entry.IsFile)
                     {
-                        var entryName = string.IsNullOrEmpty(ReplaceFrom) || string.IsNullOrEmpty(ReplaceTo) ?
+                        var entryName = !string.IsNullOrEmpty(ReplaceFrom) && !string.IsNullOrEmpty(ReplaceTo) ?
                             Regex.Replace(entry.Name, ReplaceFrom, ReplaceTo) : entry.Name;
                         var fi = new FileInfo(Path.Combine(outdir, entryName));
                         if (!fi.Directory.Exists)
