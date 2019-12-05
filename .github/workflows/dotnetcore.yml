@@ -182,4 +182,4 @@ jobs:
           asset_name: dcomp-win-x64.pdb
           asset_content_type: application/octet-binary
       - name: upload nupkg to nugetorg
-        run: "dotnet nuget push -k \"${{secrets.NUGET_API_KEY}}\" nupkg/dotnet-compressor.${{ steps.extract_tag_name.outputs.replaced }}.nupkg"
+        run: "dotnet nuget push -k \"${{secrets.NUGET_API_KEY}}\" -s https://api.nuget.org/v3/index.json nupkg/dotnet-compressor.${{ steps.extract_tag_name.outputs.replaced }}.nupkg"
