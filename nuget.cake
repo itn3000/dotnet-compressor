@@ -2,9 +2,22 @@
 var ApiKey = Argument("ApiKey", "");
 var UserName = Argument("UserName", "");
 var Password = Argument("Password", "");
-
+class NuGetContext
+{
+    public string ApiKey;
+    public string UserName;
+    public string Password;
+    public string Configuration;
+}
+Setup(ctx => new NuGetContext()
+{
+    ApiKey = ctx.Argument("ApiKey", ""),
+    UserName = ctx.Argument("UserName", ""),
+    Password = ctx.Argument("Password", ""),
+    Configuration = ctx.Argument("Configuration", "Debug")
+});
 Task("NuGet.GetBinary")
-    .Does(() =>
+    .Does<NuGetContext>((ctx) =>
     {
         var exePath = Directory("tools").Path.CombineWithFilePath("nuget.exe");
         if(FileExists(exePath))
@@ -21,20 +34,20 @@ Task("NuGet.GetBinary")
 
 Task("NuGet.Push.NuGetOrg")
     .IsDependentOn("NuGet.GetBinary")
-    .Does(() =>
+    .Does<NuGetContext>((ctx) =>
     {
         var pushSettings = new NuGetPushSettings()
         {
             Source = "https://api.nuget.org/v3/index.json",
             ApiKey = ApiKey
         };
-        var files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
+        var files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
         NuGetPush(files, pushSettings);
     });
 
 Task("NuGet.Push.GitHub")
     .IsDependentOn("NuGet.GetBinary")
-    .Does(() =>
+    .Does<NuGetContext>((ctx) =>
     {
         var SourceUrl = "https://nuget.pkg.github.com/itn3000/index.json";
         var SourceName = "GitHub";
@@ -66,14 +79,14 @@ Task("NuGet.Push.GitHub")
         {
             pushSettings.ApiKey = ApiKey;
         }
-        var files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
+        var files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
         foreach(var f in files)
         {
             Information($"{f}");
         }
         NuGetPush(files, pushSettings);
 
-        files = GetFiles(Directory("dist").Path.Combine(Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
+        files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
         foreach(var f in files)
         {
             Information($"{f}");

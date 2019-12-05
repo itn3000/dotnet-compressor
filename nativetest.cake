@@ -103,6 +103,13 @@ void TestNativeZip(string configuration, string rid)
     }
 }
 
+class NativeTestContext
+{
+    public string Configuration;
+    public string Runtime;
+    public string VersionSuffix;
+}
+
 Task("Native")
     .IsDependentOn("Native.Build")
     .IsDependentOn("Native.Test")
@@ -115,19 +122,19 @@ Task("Native.Test")
     });
 Task("Native.Test.Zip")
     .IsDependeeOf("Native.Test")
-    .Does(() =>
+    .Does<NativeTestContext>((ctx) =>
     {
-        TestNativeZip(Configuration, Runtime);
+        TestNativeZip(ctx.Configuration, ctx.Runtime);
     });
 Task("Native.Test.Tar")
     .IsDependeeOf("Native.Test")
-    .Does(() => TestNativeTar(Configuration, Runtime))
+    .Does<NativeTestContext>((ctx) => TestNativeTar(ctx.Configuration, ctx.Runtime))
     ;
 Task("Native.Build")
     .IsDependentOn("Build")
-    .Does(() =>
+    .Does<NativeTestContext>((ctx) =>
     {
-        if(string.IsNullOrEmpty(Runtime))
+        if(string.IsNullOrEmpty(ctx.Runtime))
         {
             throw new Exception("you must input Runtime argument");
         }
@@ -135,19 +142,19 @@ Task("Native.Build")
         props["WithCoreRT"] = new string[] { "true" };
         var msBuildSetting = new DotNetCoreMSBuildSettings()
             .WithProperty("WithCoreRT", "true")
-            .WithProperty("RuntimeIdentifier", Runtime)
+            .WithProperty("RuntimeIdentifier", ctx.Runtime)
             ;
-        if(!string.IsNullOrEmpty(VersionSuffix))
+        if(!string.IsNullOrEmpty(ctx.VersionSuffix))
         {
-            msBuildSetting = msBuildSetting.WithProperty("VersionSuffix", VersionSuffix);
+            msBuildSetting = msBuildSetting.WithProperty("VersionSuffix", ctx.VersionSuffix);
         }
         var setting = new DotNetCorePublishSettings()
         {
-            Configuration = Configuration,
+            Configuration = ctx.Configuration,
             MSBuildSettings = msBuildSetting,
         };
         DotNetCorePublish("src/dotnet-compressor/dotnet-compressor.csproj", setting);
-        var distbindir = Directory("dist").Path.Combine(Configuration).Combine("bin");
+        var distbindir = Directory("dist").Path.Combine(ctx.Configuration).Combine("bin");
         if(!DirectoryExists(distbindir))
         {
             CreateDirectory(distbindir);
@@ -155,12 +162,12 @@ Task("Native.Build")
         foreach(var f in GetFiles(Directory("src").Path
             .Combine("dotnet-compressor")
             .Combine("bin")
-            .Combine(Configuration)
+            .Combine(ctx.Configuration)
             .Combine("netcoreapp2.1")
-            .Combine(Runtime)
+            .Combine(ctx.Runtime)
             .Combine("native").CombineWithFilePath("*").ToString()))
         {
-            var destfile = distbindir.CombineWithFilePath($"{f.GetFilenameWithoutExtension()}-{Runtime}{f.GetExtension()}");
+            var destfile = distbindir.CombineWithFilePath($"{f.GetFilenameWithoutExtension()}-{ctx.Runtime}{f.GetExtension()}");
             CopyFile(f, destfile);
         }
     });

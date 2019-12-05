@@ -8,6 +8,15 @@ var IsRelease = HasArgument("IsRelease");
 #load "nuget.cake"
 #load "t4.cake"
 
+Setup(ctx =>
+{
+    return new NativeTestContext()
+    {
+        Configuration = ctx.Argument("Configuration", "Debug"),
+        Runtime = ctx.Argument("Runtime", ""),
+        VersionSuffix = ctx.Argument("VersionSuffix", "")
+    };
+});
 
 Task("Default")
     .IsDependentOn("Test")

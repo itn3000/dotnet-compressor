@@ -351,6 +351,7 @@ dotnet-compressor.sln
 *.bz2
 tmp/
 
-tools/
+tools/*
 dist/
 dist-bin/
+!tools/packages.config
