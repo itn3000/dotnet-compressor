@@ -117,7 +117,7 @@ jobs:
           replace-with: ""
         id: extract_tag_name
       - name: publish nupkg as github release assets
-        uses: actions/upload-release-assets@v1
+        uses: actions/upload-release-assets@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -126,7 +126,7 @@ jobs:
           asset_name: dotnet-compressor.${{ steps.extract_tag_name.replaced }}.nupkg
           asset_content_type: application/zip
       - name: publish snupkg as github release assets
-        uses: actions/upload-release-assets@v1
+        uses: actions/upload-release-assets@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -135,7 +135,7 @@ jobs:
           asset_name: dotnet-compressor.${{ steps.extract_tag_name.replaced }}.snupkg
           asset_content_type: application/zip
       - name: publish macos binary as github release assets
-        uses: actions/upload-release-assets@v1
+        uses: actions/upload-release-assets@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -144,7 +144,7 @@ jobs:
           asset_name: dcomp-osx-x64
           asset_content_type: application/octet-binary
       - name: publish linux binary as github release assets
-        uses: actions/upload-release-assets@v1
+        uses: actions/upload-release-assets@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -153,7 +153,7 @@ jobs:
           asset_name: dcomp-linux-x64
           asset_content_type: application/octet-binary
       - name: publish windows binary as github release assets
-        uses: actions/upload-release-assets@v1
+        uses: actions/upload-release-assets@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -162,7 +162,7 @@ jobs:
           asset_name: dcomp-win-x64.exe
           asset_content_type: application/octet-binary
       - name: publish windows binary pdb as github release assets
-        uses: actions/upload-release-assets@v1
+        uses: actions/upload-release-assets@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
