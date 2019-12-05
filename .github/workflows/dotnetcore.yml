@@ -182,4 +182,4 @@ jobs:
           asset_name: dcomp-win-x64.pdb
           asset_content_type: application/octet-binary
       - name: upload nupkg to nugetorg
-        run: "dotnet run tool dotnet-cake \"-Target=NuGet\" \"-ApiKey=${{secrets.NUGET_API_KEY}}\" \"-Configuration=Release\""
+        run: "dotnet tool run dotnet-cake build.cake \"-Target=NuGet\" \"-ApiKey=${{secrets.NUGET_API_KEY}}\" \"-Configuration=Release\""
