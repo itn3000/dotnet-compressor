@@ -22,6 +22,7 @@ This is the tool for compressing, archiving.
 * XZ is decompression only
 * File attributes in archive is not preserved
 * Format is not detected by automatic
+* Symblic link not supported
 
 # Usage
 
