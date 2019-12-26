@@ -60,7 +60,7 @@ you can manupilate ZIP by `zip` subcommand.
 ### File globbing
 
 * archiving files under `dir1` which has `.txt` extension: `dcomp zip c -b dir1 -i '**/*.txt' -o dir1.zip`
-* extracting files from `dir1.zip` which has `.txt` extension to `dir1`: `dcomp zip d -i '**/*.txt' -o dir1`
+* extracting files from `dir1.zip` which has `.txt` extension to `dir1`: `dcomp zip d -i dir1.zip --include '**/*.txt' -o dir1`
 
 ### Converting filename encoding 
 
