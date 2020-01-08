@@ -116,11 +116,42 @@ namespace dotnet_compressor
         }
         public static string ReplaceRegexString(string input, string pattern, string replaceto)
         {
-            if(string.IsNullOrEmpty(pattern) || string.IsNullOrEmpty(replaceto))
+            if (string.IsNullOrEmpty(pattern) || string.IsNullOrEmpty(replaceto))
             {
                 return input;
             }
             return Regex.Replace(input, pattern, replaceto);
+        }
+        public static bool IsSymlink(FileSystemInfo fsi, out bool isDirectory)
+        {
+            if ((fsi.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+            {
+                isDirectory = (fsi.Attributes & FileAttributes.Directory) == FileAttributes.Directory;
+                return true;
+            }
+            isDirectory = (fsi.Attributes & FileAttributes.Directory) == FileAttributes.Directory;
+            return false;
+        }
+        public static void CreateSymlink(string linkName, string targetName)
+        {
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+            {
+                var relpath = Path.GetRelativePath(linkName, targetName);
+                var flag = Directory.Exists(relpath) ? NativeApi.SYMBOLIC_LINK_FLAG_DIRECTORY : 0;
+                if (!NativeApi.CreateSymbolicLinkW(linkName, targetName, flag))
+                {
+                    var er = NativeApi.GetLastError();
+                    throw new InvalidOperationException($"failed to create symbolic link({er}): {targetName} - {linkName}");
+                }
+            }
+            else
+            {
+                var ret = Mono.Unix.Native.Syscall.symlink(targetName, linkName);
+                if(ret != 0)
+                {
+                    throw new InvalidOperationException($"failed to create symbolic link({ret}): {targetName} - {linkName}");
+                }
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace dotnet_compressor.Zip
 {
+    // ZIPのエクストラフィールドについて: https://github.com/koron/go-zipext/blob/master/doc/extrafld.txt
     [Command("zip")]
     [Subcommand(typeof(ZipCompressCommand))]
     [Subcommand(typeof(ZipDecompressCommand))]

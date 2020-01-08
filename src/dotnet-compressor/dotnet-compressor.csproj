@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <PropertyGroup>
+    <LangVersion>8.0</LangVersion>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <RootNamespace>dotnet_compressor</RootNamespace>
