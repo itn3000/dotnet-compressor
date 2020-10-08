@@ -67,6 +67,18 @@ Task("Pack")
         }
         DotNetCorePack("src/dotnet-compressor/dotnet-compressor.csproj", setting);
     });
+Task("Publish")
+    .IsDependentOn("Build")
+    .Does(() =>
+    {
+        var setting = new DotNetCorePublishSettings()
+        {
+            Configuration = Configuration,
+            Runtime = Runtime,
+            OutputDirectory = Directory("dist").Path.Combine(Configuration).Combine(Runtime)
+        };
+        DotNetCorePublish(File("src/dotnet-compressor/dotnet-compressor.csproj"), setting);
+    });
 Task("SlnGen")
     .Does(() =>
     {

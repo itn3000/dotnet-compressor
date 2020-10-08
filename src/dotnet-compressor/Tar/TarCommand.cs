@@ -1,18 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using SharpCompress.Archives;
-using SharpCompress.Writers.Tar;
 using System.Text;
-using SharpCompress.Common;
-using SharpCompress.Writers;
-using SharpCompress.Readers;
-using SharpCompress.Readers.Tar;
-using SharpCompress.Common.Tar;
-using SharpCompress.Compressors;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
+using ICSharpCode.SharpZipLib.GZip;
+using ICSharpCode.SharpZipLib.Tar;
+using ICSharpCode.SharpZipLib.BZip2;
 
 namespace dotnet_compressor.Tar
 {
@@ -49,69 +44,81 @@ namespace dotnet_compressor.Tar
         public string ReplaceFrom { get; set; }
         [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
         public string ReplaceTo { get; set; }
+        [Option("--compress=<COMPRESSION_FORMAT>", "decompress before tar extraction(possible values: gzip, bzip2)", CommandOptionType.SingleValue)]
+        public string CompressionFormat { get; set; }
         public int OnExecute(IConsole console)
         {
             try
             {
-                using (var istm = Util.OpenInputStream(InputPath))
+                var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
+                var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
+                if (Includes != null && Includes.Length != 0)
                 {
-                    var tropt = new ReaderOptions();
-                    tropt.ArchiveEncoding = new ArchiveEncoding()
+                    matcher.AddIncludePatterns(Includes);
+                }
+                else
+                {
+                    matcher.AddInclude("**/*");
+                }
+                if (Excludes != null && Excludes.Length != 0)
+                {
+                    matcher.AddExcludePatterns(Excludes);
+                }
+                var outdir = string.IsNullOrEmpty(OutputDirectory) ? Directory.GetCurrentDirectory() : OutputDirectory;
+                using (var istm = TarUtil.GetCompressionStream(Util.OpenInputStream(InputPath), CompressionFormat, TarStreamDirection.Input))
+                using (var tstm = new TarInputStream(istm, enc))
+                {
+                    while (true)
                     {
-                        Default = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8)
-                    };
-                    using (var tarreader = TarReader.Open(istm, tropt))
-                    {
-                        var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
-                        if (Includes != null && Includes.Length != 0)
+                        var entry = tstm.GetNextEntry();
+                        if (entry == null)
                         {
-                            matcher.AddIncludePatterns(Includes);
+                            break;
+                        }
+                        var m = matcher.Match(entry.Name);
+                        if (!m.HasMatches)
+                        {
+                            continue;
+                        }
+                        if (ListOnly)
+                        {
+                            console.WriteLine($"{entry.Name}");
+                            continue;
+                        }
+                        var entryKey = Util.ReplaceRegexString(entry.Name, ReplaceFrom, ReplaceTo);
+                        if (entry.IsDirectory)
+                        {
+                            var destdir = Path.Combine(outdir, entryKey);
+                            if (!Directory.Exists(destdir))
+                            {
+                                Directory.CreateDirectory(destdir);
+                            }
                         }
                         else
                         {
-                            matcher.AddInclude("**/*");
-                        }
-                        if (Excludes != null && Excludes.Length != 0)
-                        {
-                            matcher.AddExcludePatterns(Excludes);
-                        }
-                        var outdir = string.IsNullOrEmpty(OutputDirectory) ? Directory.GetCurrentDirectory() : OutputDirectory;
-                        while (tarreader.MoveToNextEntry())
-                        {
-                            var m = matcher.Match(tarreader.Entry.Key);
-                            if (!m.HasMatches)
+                            var destfi = new FileInfo(Path.Combine(outdir, entryKey));
+                            console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}");
+                            if (!destfi.Directory.Exists)
                             {
-                                continue;
+                                destfi.Directory.Create();
                             }
-                            if (ListOnly)
+                            using (var deststm = File.Create(destfi.FullName))
                             {
-                                console.WriteLine($"{tarreader.Entry.Key}");
-                                continue;
-                            }
-                            var entryKey = Util.ReplaceRegexString(tarreader.Entry.Key, ReplaceFrom, ReplaceTo);
-                            if (tarreader.Entry.IsDirectory)
-                            {
-                                var destdir = Path.Combine(outdir, entryKey);
-                                if (!Directory.Exists(destdir))
+                                if (entry.Size != 0)
                                 {
-                                    Directory.CreateDirectory(destdir);
+                                    var buf = new byte[4096];
+                                    while (true)
+                                    {
+                                        var bytesread = tstm.Read(buf, 0, buf.Length);
+                                        if (bytesread == 0)
+                                        {
+                                            break;
+                                        }
+                                        deststm.Write(buf, 0, bytesread);
+                                    }
                                 }
                             }
-                            else
-                            {
-                                var destfi = new FileInfo(Path.Combine(outdir, entryKey));
-                                console.Error.WriteLine($"extracting {tarreader.Entry.Key} to {destfi.FullName}");
-                                if (!destfi.Directory.Exists)
-                                {
-                                    destfi.Directory.Create();
-                                }
-                                using (var deststm = File.Create(destfi.FullName))
-                                using (var entrystm = tarreader.OpenEntryStream())
-                                {
-                                    entrystm.CopyTo(deststm);
-                                }
-                                destfi.LastWriteTime = tarreader.Entry.LastModifiedTime.GetValueOrDefault(DateTime.Now);
-                            }
+                            destfi.LastWriteTime = entry.ModTime;
                         }
                     }
                 }
@@ -142,10 +149,13 @@ namespace dotnet_compressor.Tar
         public string ReplaceFrom { get; set; }
         [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
         public string ReplaceTo { get; set; }
+        [Option("--compress=<COMPRESSION_FORMAT>", "compress after tar archiving(possible values: gzip, bzip2)", CommandOptionType.SingleValue)]
+        public string CompressionFormat { get; set; }
         public int OnExecute(IConsole con)
         {
             try
             {
+                var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
                 var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
                 if (Excludes != null && Excludes.Length != 0)
                 {
@@ -163,21 +173,28 @@ namespace dotnet_compressor.Tar
                 var result = matcher.Execute(new DirectoryInfoWrapper(di));
                 if (result.HasMatches)
                 {
-                    using (var ostm = Util.OpenOutputStream(OutputPath, true))
+                    using (var ostm = TarUtil.GetCompressionStream(Util.OpenOutputStream(OutputPath, true), CompressionFormat, TarStreamDirection.Output))
+                    using (var tstm = new TarOutputStream(ostm, enc))
                     {
-                        var twopt = new TarWriterOptions(SharpCompress.Common.CompressionType.None, true);
-                        twopt.ArchiveEncoding = new SharpCompress.Common.ArchiveEncoding()
+                        foreach (var fileInfo in result.Files)
                         {
-                            Default = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8)
-                        };
-                        using (var tar = new SharpCompress.Writers.Tar.TarWriter(ostm, twopt))
-                        {
-                            foreach (var fileInfo in result.Files)
+                            var fi = new FileInfo(Path.Combine(di.FullName, fileInfo.Path));
+                            var theader = new TarHeader();
+                            theader.ModTime = fi.LastWriteTime;
+                            var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
+                            theader.Name = targetPath;
+                            theader.Size = fi.Length;
+                            var tentry = new TarEntry(theader);
+                            tentry.Name = targetPath;
+                            tstm.PutNextEntry(tentry);
+                            con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'");
+                            if (fi.Length != 0)
                             {
-                                var fi = new FileInfo(Path.Combine(di.FullName, fileInfo.Path));
-                                var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
-                                con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'");
-                                tar.Write(targetPath, fi);
+                                using (var fstm = fi.OpenRead())
+                                {
+                                    fstm.CopyTo(tstm);
+                                }
+                                tstm.CloseEntry();
                             }
                         }
                     }
@@ -193,6 +210,47 @@ namespace dotnet_compressor.Tar
             {
                 con.Error.WriteLine($"failed to creating tar archive:{e}");
                 return 1;
+            }
+        }
+    }
+    enum TarStreamDirection
+    {
+        Input,
+        Output,
+    }
+    static class TarUtil
+    {
+        static public Stream GetCompressionStream(Stream stm, string compressionFormat, TarStreamDirection direction)
+        {
+            if (string.IsNullOrEmpty(compressionFormat))
+            {
+                return stm;
+            }
+            if (compressionFormat.Equals("gzip", StringComparison.OrdinalIgnoreCase))
+            {
+                if (direction == TarStreamDirection.Input)
+                {
+                    return new GZipInputStream(stm);
+                }
+                else
+                {
+                    return new GZipOutputStream(stm);
+                }
+            }
+            else if (compressionFormat.Equals("bzip2", StringComparison.OrdinalIgnoreCase))
+            {
+                if (direction == TarStreamDirection.Input)
+                {
+                    return new BZip2InputStream(stm);
+                }
+                else
+                {
+                    return new BZip2OutputStream(stm);
+                }
+            }
+            else
+            {
+                return stm;
             }
         }
     }
