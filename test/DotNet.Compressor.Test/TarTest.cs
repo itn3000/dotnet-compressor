@@ -81,6 +81,7 @@ namespace DotNet.Compressor.Test
         [Theory]
         [InlineData("gzip", "tgz")]
         [InlineData("bzip2", "tbz")]
+        [InlineData("lzip", "tlz")]
         public void WithCompressionTest(string compressionFormat, string ext)
         {
             var testName = nameof(TarTest) + "Compression" + nameof(EncodingTest) + compressionFormat;

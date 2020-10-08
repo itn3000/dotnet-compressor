@@ -8,6 +8,7 @@ using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.BZip2;
+using SharpCompress.Compressors.LZMA;
 
 namespace dotnet_compressor.Tar
 {
@@ -44,7 +45,7 @@ namespace dotnet_compressor.Tar
         public string ReplaceFrom { get; set; }
         [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
         public string ReplaceTo { get; set; }
-        [Option("--compress=<COMPRESSION_FORMAT>", "decompress before tar extraction(possible values: gzip, bzip2)", CommandOptionType.SingleValue)]
+        [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "decompress before tar extraction(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
         public string CompressionFormat { get; set; }
         public int OnExecute(IConsole console)
         {
@@ -149,7 +150,7 @@ namespace dotnet_compressor.Tar
         public string ReplaceFrom { get; set; }
         [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
         public string ReplaceTo { get; set; }
-        [Option("--compress=<COMPRESSION_FORMAT>", "compress after tar archiving(possible values: gzip, bzip2)", CommandOptionType.SingleValue)]
+        [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "compress after tar archiving(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
         public string CompressionFormat { get; set; }
         public int OnExecute(IConsole con)
         {
@@ -173,7 +174,8 @@ namespace dotnet_compressor.Tar
                 var result = matcher.Execute(new DirectoryInfoWrapper(di));
                 if (result.HasMatches)
                 {
-                    using (var ostm = TarUtil.GetCompressionStream(Util.OpenOutputStream(OutputPath, true), CompressionFormat, TarStreamDirection.Output))
+                    using (var ofstm = Util.OpenOutputStream(OutputPath, true))
+                    using (var ostm = TarUtil.GetCompressionStream(ofstm, CompressionFormat, TarStreamDirection.Output))
                     using (var tstm = new TarOutputStream(ostm, enc))
                     {
                         foreach (var fileInfo in result.Files)
@@ -248,9 +250,20 @@ namespace dotnet_compressor.Tar
                     return new BZip2OutputStream(stm);
                 }
             }
+            else if(compressionFormat.Equals("lzip", StringComparison.OrdinalIgnoreCase))
+            {
+                if(direction == TarStreamDirection.Input)
+                {
+                    return new LZipStream(stm, SharpCompress.Compressors.CompressionMode.Decompress);
+                }
+                else
+                {
+                    return new LZipStream(stm, SharpCompress.Compressors.CompressionMode.Compress);
+                }
+            }
             else
             {
-                return stm;
+                throw new Exception($"unknown format: {compressionFormat}");
             }
         }
     }
