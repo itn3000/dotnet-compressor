@@ -7,7 +7,7 @@ FilePath GetNativeExePath(string configuration, string rid)
     }
     return Directory("src").Path
         .Combine("dotnet-compressor")
-        .Combine("bin").Combine(configuration).Combine("netcoreapp2.1").Combine(rid).Combine("native")
+        .Combine("bin").Combine(configuration).Combine("netcoreapp3.1").Combine(rid).Combine("native")
         .CombineWithFilePath(File("dcomp") + exeExtension)
         ;
 }
@@ -163,7 +163,7 @@ Task("Native.Build")
             .Combine("dotnet-compressor")
             .Combine("bin")
             .Combine(ctx.Configuration)
-            .Combine("netcoreapp2.1")
+            .Combine("netcoreapp3.1")
             .Combine(ctx.Runtime)
             .Combine("native").CombineWithFilePath("*").ToString()))
         {

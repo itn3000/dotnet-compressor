@@ -153,7 +153,7 @@ here are prerequisits if you want to build native binary
 2. run `dotnet tool run dotnet-cake`
     * if you want to build release binary, run `dotnet tool run dotnet-cake -Configuration=Release -IsRelease`
 
-and then you will get nupkg in `dist/[Configuration]/nupkg`, binary executable in `bin/Release/netcoreapp2.1`
+and then you will get nupkg in `dist/[Configuration]/nupkg`, binary executable in `bin/Release/netcoreapp3.1`
 
 ## Build native binary
 
