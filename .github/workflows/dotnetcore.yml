@@ -87,7 +87,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "3.0.101"
+          dotnet-version: "3.1.402"
       - name: restore dotnet tools
         run: dotnet tool restore
       - name: downloading nuget package
