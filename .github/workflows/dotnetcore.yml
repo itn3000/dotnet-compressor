@@ -9,7 +9,7 @@ jobs:
       matrix:
         os: ["ubuntu-18.04", "windows-latest", "macos-latest"]
         rid: ["linux-x64", "win-x64", "osx-x64"]
-        linker: ["", "clang-9.0"]
+        linker: ["", "clang-8.0"]
         exclude:
           - os: "windows-latest"
             rid: "linux-x64"
@@ -24,11 +24,11 @@ jobs:
           - os: "ubuntu-18.04"
             rid: "osx-x64"
           - os: "windows-latest"
-            linker: "clang-9.0"
+            linker: "clang-8.0"
           - os: "ubuntu-18.04"
             linker: ""
           - os: "macos-latest"
-            linker: "clang-9.0"
+            linker: "clang-8.0"
     env:
       CppCompilerAndLinker: ${{ matrix.linker }}
     steps:
