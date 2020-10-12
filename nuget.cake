@@ -106,16 +106,18 @@ Task("NuGet.Push.GitHub")
             foreach(var f in files)
             {
                 Information($"{f}");
+                StartProcess(File("./tools/nuget.exe"), $"{f} -Source {SourceName} -ConfigFile ./tmp/NuGet.config -ForceEnglishOutput -Verbosity detailed");
             }
             
-            NuGetPush(files, pushSettings);
+            // NuGetPush(files, pushSettings);
 
             files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
             foreach(var f in files)
             {
                 Information($"{f}");
+                StartProcess(File("./tools/nuget.exe"), $"{f} -Source {SourceName} -ConfigFile ./tmp/NuGet.config -ForceEnglishOutput -Verbosity detailed");
             }
-            NuGetPush(files, pushSettings);
+            // NuGetPush(files, pushSettings);
         }
         finally
         {
