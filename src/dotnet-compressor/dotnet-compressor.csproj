@@ -25,6 +25,7 @@
     <VersionPrefix>0.1.0</VersionPrefix>
     <PackageDescription>dotnet compression/decompression tool</PackageDescription>
     <PackageProjectUrl>https://github.com/itn3000/dotnet-compressor</PackageProjectUrl>
+    <PackageRepositoryUrl>https://github.com/itn3000/dotnet-compressor</PackageRepositoryUrl>
     <PackageTags>dotnet tool compress zip tar gzip bzip2 lzip</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>Itn3000</Authors>
