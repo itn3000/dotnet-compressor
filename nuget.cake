@@ -28,7 +28,7 @@ Task("NuGet.GetBinary")
         {
             CreateDirectory(exePath.GetDirectory());
         }
-        var tmpPath = DownloadFile("https://dist.nuget.org/win-x86-commandline/v5.3.1/nuget.exe");
+        var tmpPath = DownloadFile("https://dist.nuget.org/win-x86-commandline/v5.7.0/nuget.exe");
         MoveFile(tmpPath, exePath);
     });
 
@@ -50,7 +50,7 @@ Task("NuGet.Push.GitHub")
     .Does<NuGetContext>((ctx) =>
     {
         var SourceUrl = "https://nuget.pkg.github.com/itn3000/index.json";
-        var SourceName = "GitHub";
+        var SourceName = "github";
         if(NuGetHasSource(SourceUrl))
         {
             Information("overwrite source");
@@ -68,30 +68,57 @@ Task("NuGet.Push.GitHub")
         {
             settings.Password = Password;
         }
-        Information($"src is {SourceName}, {SourceUrl}");
-        NuGetAddSource(SourceName, SourceUrl, settings);
-        Information($"source add done");
-        var pushSettings = new NuGetPushSettings()
+        var nugetconfig = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
+<configuration>
+    <packageSources>
+        <clear />
+        <add key=""nugetv3"" value=""https://api.nuget.org/v3/index.json"" protocolVersion=""3"" />
+        <add key=""github"" value=""{0}"" />
+    </packageSources>
+    <packageSourceCredentials>
+        <github>
+            <add key=""username"" value=""{1}"" />
+            <add key=""cleartextpassword"" value=""{2}"" />
+            <add key=""validauthenticationtypes"" value=""basic"" />
+        </github>
+    </packageSourceCredentials>
+</configuration>
+", SourceUrl, UserName, Password);
+        CreateDirectory(Directory("tmp"));
+        System.IO.File.WriteAllText(Directory("tmp").Path.CombineWithFilePath("NuGet.config").ToString(), nugetconfig);
+        try
         {
-            Source = SourceName,
-        };
-        if(!string.IsNullOrEmpty(ApiKey))
-        {
-            pushSettings.ApiKey = ApiKey;
-        }
-        var files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
-        foreach(var f in files)
-        {
-            Information($"{f}");
-        }
-        NuGetPush(files, pushSettings);
+            // Information($"src is {SourceName}, {SourceUrl}");
+            // NuGetAddSource(SourceName, SourceUrl, settings);
+            // Information($"source add done");
+            var pushSettings = new NuGetPushSettings()
+            {
+                Source = SourceName,
+            };
+            if(!string.IsNullOrEmpty(ApiKey))
+            {
+                pushSettings.ApiKey = ApiKey;
+            }
+            pushSettings.ConfigFile = File("tmp/NuGet.config");
+            var files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
+            foreach(var f in files)
+            {
+                Information($"{f}");
+            }
+            
+            NuGetPush(files, pushSettings);
 
-        files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
-        foreach(var f in files)
-        {
-            Information($"{f}");
+            files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.snupkg").ToString());
+            foreach(var f in files)
+            {
+                Information($"{f}");
+            }
+            NuGetPush(files, pushSettings);
         }
-        NuGetPush(files, pushSettings);
+        finally
+        {
+            CleanDirectory(Directory("tmp"));
+        }
     });
 Task("NuGet")
     .IsDependentOn("NuGet.Push.NuGetOrg")
