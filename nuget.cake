@@ -51,11 +51,11 @@ Task("NuGet.Push.GitHub")
     {
         var SourceUrl = "https://nuget.pkg.github.com/itn3000/index.json";
         var SourceName = "github";
-        if(NuGetHasSource(SourceUrl))
-        {
-            Information("overwrite source");
-            NuGetRemoveSource(SourceName, SourceUrl);
-        }
+        // if(NuGetHasSource(SourceUrl))
+        // {
+        //     Information("overwrite source");
+        //     NuGetRemoveSource(SourceName, SourceUrl);
+        // }
         var settings = new NuGetSourcesSettings()
         {
             IsSensitiveSource = true,
@@ -68,6 +68,7 @@ Task("NuGet.Push.GitHub")
         {
             settings.Password = Password;
         }
+        StartProcess(File("./tools/nuget.exe"), "help");
         var nugetconfig = string.Format(@"<?xml version=""1.0"" encoding=""utf-8""?>
 <configuration>
     <packageSources>
@@ -99,6 +100,7 @@ Task("NuGet.Push.GitHub")
             {
                 pushSettings.ApiKey = ApiKey;
             }
+            pushSettings.ToolPath = File("./tools/nuget.exe");
             pushSettings.ConfigFile = File("tmp/NuGet.config");
             var files = GetFiles(Directory("dist").Path.Combine(ctx.Configuration).Combine("nupkg").Combine("*.nupkg").ToString());
             foreach(var f in files)
