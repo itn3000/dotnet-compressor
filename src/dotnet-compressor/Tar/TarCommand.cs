@@ -182,7 +182,7 @@ namespace dotnet_compressor.Tar
                         {
                             var fi = new FileInfo(Path.Combine(di.FullName, fileInfo.Path));
                             var theader = new TarHeader();
-                            theader.ModTime = fi.LastWriteTime;
+                            theader.ModTime = fi.LastWriteTime.ToUniversalTime();
                             var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
                             theader.Name = targetPath;
                             theader.Size = fi.Length;
