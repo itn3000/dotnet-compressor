@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
@@ -132,6 +133,13 @@ namespace dotnet_compressor.Tar
             }
         }
     }
+    class PermissionMapElement
+    {
+        public Regex Re { get; set; }
+        public int Permission { get; set; }
+        public int? Uid { get; set; }
+        public int? Gid { get; set; }
+    }
     [Command("c", "compress", "tarcompress", Description = "creating tar archive")]
     [HelpOption]
     class TarCompressCommand
@@ -152,10 +160,94 @@ namespace dotnet_compressor.Tar
         public string ReplaceTo { get; set; }
         [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "compress after tar archiving(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
         public string CompressionFormat { get; set; }
+        [Option("-pm|--permission-map=<MAP_ELEMENT>", "entry permission mapping(format is '[regex]=[permission number(octal)]:[uid(in decimal, optional)]:[gid(in decimal, optional)]', default: 644(octal)", CommandOptionType.MultipleValue)]
+        public string[] PermissionStrings { get; set; }
+        [Option("-pf|--permission-file=<MAP_FILE>", "entry permission mapping(format is same as '--permission-map' option, one mapping per line)", CommandOptionType.SingleValue)]
+        public string PermissionMapFile { get; set; }
+        List<PermissionMapElement> _PermissionMap = new List<PermissionMapElement>();
+        (int permission, int? uid, int? gid) GetUnixPermission(string entryName)
+        {
+            foreach (var perm in _PermissionMap)
+            {
+                if (perm.Re != null)
+                {
+                    var m = perm.Re.Match(entryName);
+                    if (m.Success)
+                    {
+                        return (perm.Permission, perm.Uid, perm.Gid);
+                    }
+                }
+            }
+            // 0755
+            return (0x1a4, null, null);
+        }
+        PermissionMapElement ParsePermissionMapElement(string s)
+        {
+            var idx = s.LastIndexOf('=');
+            if (idx != -1)
+            {
+                var re = new Regex(s.Substring(0, idx));
+                var values = s.Substring(idx + 1).Split(':');
+                var permission = Convert.ToInt32(values[0], 8);
+                int? uid = null;
+                if (values.Length >= 2)
+                {
+                    uid = Convert.ToInt32(values[1], 8);
+                }
+                int? gid = null;
+                if (values.Length >= 3)
+                {
+                    gid = Convert.ToInt32(values[2], 8);
+                }
+                return new PermissionMapElement()
+                {
+                    Re = re,
+                    Permission = permission,
+                    Uid = uid,
+                    Gid = gid,
+                };
+            }
+            else
+            {
+                return new PermissionMapElement()
+                {
+                    // 0644
+                    Permission = 0x1a4,
+                    Uid = null,
+                    Gid = null,
+                };
+            }
+        }
+        void InitializePermissionMap()
+        {
+            var tmpList = new List<PermissionMapElement>();
+            if (PermissionStrings != null && PermissionStrings.Length != 0)
+            {
+                foreach (var perm in PermissionStrings)
+                {
+                    tmpList.Add(ParsePermissionMapElement(perm));
+                }
+            }
+            if (!string.IsNullOrEmpty(PermissionMapFile))
+            {
+                using (var fstm = File.OpenRead(PermissionMapFile))
+                using (var treader = new StreamReader(fstm))
+                {
+                    while (true)
+                    {
+                        var l = treader.ReadLine();
+                        tmpList.Add(ParsePermissionMapElement(l));
+                    }
+                }
+            }
+            tmpList.Reverse();
+            _PermissionMap = tmpList;
+        }
         public int OnExecute(IConsole con)
         {
             try
             {
+                InitializePermissionMap();
                 var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
                 var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
                 if (Excludes != null && Excludes.Length != 0)
@@ -186,10 +278,20 @@ namespace dotnet_compressor.Tar
                             var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
                             theader.Name = targetPath;
                             theader.Size = fi.Length;
+                            var (permission, uid, gid) = GetUnixPermission(targetPath);
+                            theader.Mode = permission;
+                            if (uid.HasValue)
+                            {
+                                theader.UserId = uid.Value;
+                            }
+                            if (gid.HasValue)
+                            {
+                                theader.GroupId = gid.Value;
+                            }
                             var tentry = new TarEntry(theader);
                             tentry.Name = targetPath;
                             tstm.PutNextEntry(tentry);
-                            con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'");
+                            con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
                             if (fi.Length != 0)
                             {
                                 using (var fstm = fi.OpenRead())
@@ -250,9 +352,9 @@ namespace dotnet_compressor.Tar
                     return new BZip2OutputStream(stm);
                 }
             }
-            else if(compressionFormat.Equals("lzip", StringComparison.OrdinalIgnoreCase))
+            else if (compressionFormat.Equals("lzip", StringComparison.OrdinalIgnoreCase))
             {
-                if(direction == TarStreamDirection.Input)
+                if (direction == TarStreamDirection.Input)
                 {
                     return new LZipStream(stm, SharpCompress.Compressors.CompressionMode.Decompress);
                 }

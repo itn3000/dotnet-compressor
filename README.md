@@ -94,6 +94,10 @@ you can manupilate ZIP by `zip` subcommand.
 * archiving files and convert filename to Shift-JIS: `dcomp tar c -e sjis -b dir1 -o dir1.tar`
 * extracting `dir1.tar` and filename decoding as Shift-JIS: `dcomp tar d -e sjis -i dir1.tar -o dir1`
 
+### set file permission(since 1.1.0)
+
+* set file permission '0755' for files which have '*.sh' extension: `dcomp tar c -b dir1 -o dir1.tar -pm ".*\.sh=755"`
+
 ## GZIP
 
 ### Basic Usage
@@ -130,8 +134,7 @@ you can manupilate ZIP by `zip` subcommand.
 
 ## Prerequisits
 
-* dotnet-sdk 3.0
-* dotnet-sdk 2.1
+* dotnet-sdk 3.1
 * mono(if linux or mac)
 * .NET Framework 4.6.1 or later(if windows)
 
