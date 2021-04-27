@@ -5,18 +5,17 @@
   </ItemGroup> -->
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandlineUtils" Version="2.3.4" />
-    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="2.2.0" />
-    <PackageReference Include="Mono.Posix.NETStandard" Version="1.0.0" />
-    <PackageReference Include="SharpZipLib" Version="1.3.0" />
-    <PackageReference Include="SharpCompress" Version="0.26.0" />
+    <PackageReference Include="McMaster.Extensions.CommandlineUtils" Version="3.1.0" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
+    <PackageReference Include="SharpZipLib" Version="1.3.1" />
+    <PackageReference Include="SharpCompress" Version="0.28.2" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>dotnet_compressor</RootNamespace>
     <AssemblyName>dcomp</AssemblyName>
     <IncludeSymbols>true</IncludeSymbols>
@@ -35,7 +34,7 @@
     <PackAsTool>true</PackAsTool>
   </PropertyGroup>
   <ItemGroup Condition="'$(WithCoreRT)' == 'true'">
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-*" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
     <!-- <RdXmlFile Include="rd.xml"/> -->
   </ItemGroup>
 

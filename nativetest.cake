@@ -163,7 +163,7 @@ Task("Native.Build")
             .Combine("dotnet-compressor")
             .Combine("bin")
             .Combine(ctx.Configuration)
-            .Combine("netcoreapp3.1")
+            .Combine("net5.0")
             .Combine(ctx.Runtime)
             .Combine("native").CombineWithFilePath("*").ToString()))
         {

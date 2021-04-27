@@ -165,6 +165,12 @@ namespace dotnet_compressor.Tar
         [Option("-pf|--permission-file=<MAP_FILE>", "entry permission mapping(format is same as '--permission-map' option, one mapping per line)", CommandOptionType.SingleValue)]
         public string PermissionMapFile { get; set; }
         List<PermissionMapElement> _PermissionMap = new List<PermissionMapElement>();
+        [Option("-r|--retry", "retry count(default: 5)", CommandOptionType.SingleValue)]
+        public string RetryNumString { get; set; }
+        [Option("--stop-on-error", "stop on compression error in adding file entry(default: false)", CommandOptionType.NoValue)]
+        public bool StopOnError { get; set; } = false;
+        [Option("--verbose", "verbose output(default: false)", CommandOptionType.NoValue)]
+        public bool Verbose { get; set; }
         (int permission, int? uid, int? gid) GetUnixPermission(string entryName)
         {
             foreach (var perm in _PermissionMap)
@@ -243,6 +249,50 @@ namespace dotnet_compressor.Tar
             tmpList.Reverse();
             _PermissionMap = tmpList;
         }
+        void AddFileEntry(TarOutputStream tstm, IConsole con, FilePatternMatch fileInfo, FileInfo fi)
+        {
+            var theader = new TarHeader();
+            theader.ModTime = fi.LastWriteTime.ToUniversalTime();
+            var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
+            theader.Name = targetPath;
+            theader.Size = fi.Length;
+            var (permission, uid, gid) = GetUnixPermission(targetPath);
+            theader.Mode = permission;
+            if (uid.HasValue)
+            {
+                theader.UserId = uid.Value;
+            }
+            if (gid.HasValue)
+            {
+                theader.GroupId = gid.Value;
+            }
+            var tentry = new TarEntry(theader);
+            tentry.Name = targetPath;
+            tstm.PutNextEntry(tentry);
+            if (Verbose)
+            {
+                con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
+            }
+            if (fi.Length != 0)
+            {
+                using (var fstm = fi.OpenRead())
+                {
+                    fstm.CopyTo(tstm);
+                }
+                tstm.CloseEntry();
+            }
+        }
+        uint GetRetryNum()
+        {
+            if(!string.IsNullOrEmpty(RetryNumString) && !uint.TryParse(RetryNumString, out var retryNum))
+            {
+                return retryNum;
+            }
+            else
+            {
+                return 5;
+            }
+        }
         public int OnExecute(IConsole con)
         {
             try
@@ -272,33 +322,43 @@ namespace dotnet_compressor.Tar
                     {
                         foreach (var fileInfo in result.Files)
                         {
-                            var fi = new FileInfo(Path.Combine(di.FullName, fileInfo.Path));
-                            var theader = new TarHeader();
-                            theader.ModTime = fi.LastWriteTime.ToUniversalTime();
-                            var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
-                            theader.Name = targetPath;
-                            theader.Size = fi.Length;
-                            var (permission, uid, gid) = GetUnixPermission(targetPath);
-                            theader.Mode = permission;
-                            if (uid.HasValue)
+                            Exception exception = null;
+                            var RetryNum = GetRetryNum();
+                            for (int i = 0; i < RetryNum; i++)
                             {
-                                theader.UserId = uid.Value;
-                            }
-                            if (gid.HasValue)
-                            {
-                                theader.GroupId = gid.Value;
-                            }
-                            var tentry = new TarEntry(theader);
-                            tentry.Name = targetPath;
-                            tstm.PutNextEntry(tentry);
-                            con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
-                            if (fi.Length != 0)
-                            {
-                                using (var fstm = fi.OpenRead())
+                                exception = null;
+                                var fi = new FileInfo(Path.Combine(di.FullName, fileInfo.Path));
+                                if (fi.Exists)
                                 {
-                                    fstm.CopyTo(tstm);
+                                    try
+                                    {
+                                        AddFileEntry(tstm, con, fileInfo, fi);
+                                    }
+                                    catch (Exception e)
+                                    {
+                                        exception = e;
+                                        continue;
+                                    }
                                 }
-                                tstm.CloseEntry();
+                                else
+                                {
+                                    if (Verbose)
+                                    {
+                                        con.Error.WriteLine($"{fi.FullName} does not exist, skipped");
+                                    }
+                                }
+                                if (exception != null)
+                                {
+                                    con.Error.WriteLine($"add file entry error({i}, {fi.FullName}), retry: {exception}");
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                            if (StopOnError)
+                            {
+                                throw new Exception("retry num exceed", exception);
                             }
                         }
                     }

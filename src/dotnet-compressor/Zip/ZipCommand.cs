@@ -12,7 +12,6 @@ using System.IO;
 using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
 using System.IO.Compression;
-using Mono.Posix;
 using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace dotnet_compressor.Zip
@@ -53,6 +52,8 @@ namespace dotnet_compressor.Zip
         public string ReplaceFrom { get; set; } = "";
         [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
         public string ReplaceTo { get; set; } = "";
+        [Option("--verbose", "verbose output(default: false)", CommandOptionType.NoValue)]
+        public bool Verbose { get; set; }
         Matcher GetMatcher()
         {
             var matcher = new Matcher(StringComparison.CurrentCultureIgnoreCase);
@@ -109,7 +110,10 @@ namespace dotnet_compressor.Zip
                         {
                             fi.Directory.Create();
                         }
-                        console.Error.WriteLine($"extracting {entry.Name} to {fi.FullName}");
+                        if(Verbose)
+                        {
+                            console.Error.WriteLine($"extracting {entry.Name} to {fi.FullName}");
+                        }
                         long totalread = 0;
                         using (var ofstm = File.Create(fi.FullName))
                         {
@@ -169,6 +173,23 @@ namespace dotnet_compressor.Zip
         public string ReplaceFrom { get; set; }
         [Option("--replace-to=<REPLACE_TO>", "replace filename dest regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
         public string ReplaceTo { get; set; }
+        [Option("-r|--retry", "retry count(default: 5)", CommandOptionType.SingleValue)]
+        public string RetryNumString { get; set; }
+        [Option("--stop-on-error", "stop compression on error in adding file entry(default: false)", CommandOptionType.NoValue)]
+        public bool StopOnError { get; set; } = false;
+        [Option("--verbose", "verbose output(default: false)", CommandOptionType.NoValue)]
+        public bool Verbose { get; set; }
+        uint GetRetryNum()
+        {
+            if(!string.IsNullOrEmpty(RetryNumString) && uint.TryParse(RetryNumString, out var retryNum))
+            {
+                return retryNum;
+            }
+            else
+            {
+                return 5;
+            }
+        }
         public int OnExecute(IConsole console)
         {
             try
@@ -192,18 +213,57 @@ namespace dotnet_compressor.Zip
 
                     foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
                     {
-                        var fi = new FileInfo(Path.Combine(basePath, path));
-                        var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
-                        var zentry = new ZipEntry(entryName);
-                        console.Error.WriteLine($"{path} -> {entryName}");
-                        zentry.DateTime = fi.LastWriteTime;
-                        zentry.Size = fi.Length;
-                        zstm.PutNextEntry(zentry);
-                        using (var istm = fi.OpenRead())
+                        Exception exception = null;
+                        var RetryNum = GetRetryNum();
+                        for (int i = 0; i < RetryNum; i++)
                         {
-                            istm.CopyTo(zstm);
+                            try
+                            {
+                                exception = null;
+                                var fi = new FileInfo(Path.Combine(basePath, path));
+                                if (fi.Exists)
+                                {
+                                    var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
+                                    var zentry = new ZipEntry(entryName);
+                                    if(Verbose)
+                                    {
+                                        console.Error.WriteLine($"{path} -> {entryName}");
+                                    }
+                                    zentry.DateTime = fi.LastWriteTime;
+                                    using (var istm = fi.OpenRead())
+                                    {
+                                        zentry.Size = istm.Length;
+                                        zstm.PutNextEntry(zentry);
+                                        istm.CopyTo(zstm);
+                                    }
+                                    zstm.CloseEntry();
+                                }
+                                else
+                                {
+                                    if(Verbose)
+                                    {
+                                        console.Error.WriteLine($"{fi.FullName} does not exist, skipped");
+                                    }
+                                }
+                                break;
+                            }
+                            catch (Exception e)
+                            {
+                                console.Error.WriteLine($"failed to add entry({path}, {i}): {e}");
+                                exception = e;
+                            }
                         }
-                        zstm.CloseEntry();
+                        if (exception != null)
+                        {
+                            if (StopOnError)
+                            {
+                                throw new Exception("error num exceed, stopped", exception);
+                            }
+                            else
+                            {
+                                console.Error.WriteLine($"entry {path} skipped");
+                            }
+                        }
                     }
                 }
                 return 0;
