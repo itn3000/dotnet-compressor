@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Linq;
 using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
@@ -13,6 +14,90 @@ using SharpCompress.Compressors.LZMA;
 
 namespace dotnet_compressor.Tar
 {
+    class MyFileInfo : FileInfoBase
+    {
+        string _Name;
+        string _FullName;
+        DirectoryInfoBase _Parent;
+        public MyFileInfo(string name, string fullName, DirectoryInfoBase parent)
+        {
+            _Name = name;
+            _FullName = fullName;
+            _Parent = parent;
+        }
+        public override string Name => _Name;
+
+        public override string FullName => _FullName;
+
+        public override DirectoryInfoBase ParentDirectory => _Parent;
+    }
+    class MyDirectoryInfo : DirectoryInfoBase
+    {
+        DirectoryInfo _Directory;
+        MyDirectoryInfo _Parent;
+        public MyDirectoryInfo(DirectoryInfo di)
+        {
+            _Directory = di;
+            _Parent = di.Parent != null ? new MyDirectoryInfo(di.Parent) : null;
+        }
+        public override string Name => _Directory.Name;
+
+        public override string FullName => _Directory.FullName;
+
+        public override DirectoryInfoBase ParentDirectory => _Parent;
+
+        public override IEnumerable<FileSystemInfoBase> EnumerateFileSystemInfos()
+        {
+            foreach (var fsi in _Directory.EnumerateFileSystemInfos("*", SearchOption.TopDirectoryOnly))
+            {
+                if (fsi is DirectoryInfo di)
+                {
+                    yield return new MyFileInfo(di.Name, di.FullName, new MyDirectoryInfo(_Directory));
+                    yield return new MyDirectoryInfo(di);
+                }
+                else if (fsi is FileInfo fi)
+                {
+                    yield return new MyFileInfo(fsi.Name, fsi.FullName, new MyDirectoryInfo(_Directory));
+                }
+            }
+        }
+
+        public override DirectoryInfoBase GetDirectory(string path)
+        {
+            if (path.Equals("..", StringComparison.Ordinal))
+            {
+                return new MyDirectoryInfo(_Directory.Parent);
+            }
+            else
+            {
+                var retval = _Directory.GetDirectories(path);
+                if (retval != null)
+                {
+                    if (retval.Length == 1)
+                    {
+                        return new MyDirectoryInfo(retval[0]);
+                    }
+                    else if (retval.Length == 0)
+                    {
+                        return null;
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException($"more than one subdirectories are found under {_Directory.FullName} with name {path}");
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        public override FileInfoBase GetFile(string path)
+        {
+            throw new NotImplementedException();
+        }
+    }
     [Command("tar")]
     [Subcommand(typeof(TarDecompressCommand))]
     [Subcommand(typeof(TarCompressCommand))]
@@ -160,7 +245,7 @@ namespace dotnet_compressor.Tar
         public string ReplaceTo { get; set; }
         [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "compress after tar archiving(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
         public string CompressionFormat { get; set; }
-        [Option("-pm|--permission-map=<MAP_ELEMENT>", "entry permission mapping(format is '[regex]=[permission number(octal)]:[uid(in decimal, optional)]:[gid(in decimal, optional)]', default: 644(octal)", CommandOptionType.MultipleValue)]
+        [Option("-pm|--permission-map=<MAP_ELEMENT>", "entry permission mapping(format is '[regex]=[permission number(octal)]:[uid(in decimal, optional)]:[gid(in decimal, optional)]', default: 644(file),755(directory)", CommandOptionType.MultipleValue)]
         public string[] PermissionStrings { get; set; }
         [Option("-pf|--permission-file=<MAP_FILE>", "entry permission mapping(format is same as '--permission-map' option, one mapping per line)", CommandOptionType.SingleValue)]
         public string PermissionMapFile { get; set; }
@@ -171,7 +256,7 @@ namespace dotnet_compressor.Tar
         public bool StopOnError { get; set; } = false;
         [Option("--verbose", "verbose output(default: false)", CommandOptionType.NoValue)]
         public bool Verbose { get; set; }
-        (int permission, int? uid, int? gid) GetUnixPermission(string entryName)
+        (int permission, int? uid, int? gid) GetUnixPermission(string entryName, int defaultValue)
         {
             foreach (var perm in _PermissionMap)
             {
@@ -184,8 +269,7 @@ namespace dotnet_compressor.Tar
                     }
                 }
             }
-            // 0755
-            return (0x1a4, null, null);
+            return (defaultValue, null, null);
         }
         PermissionMapElement ParsePermissionMapElement(string s)
         {
@@ -256,7 +340,8 @@ namespace dotnet_compressor.Tar
             var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
             theader.Name = targetPath;
             theader.Size = fi.Length;
-            var (permission, uid, gid) = GetUnixPermission(targetPath);
+            // default is 0644
+            var (permission, uid, gid) = GetUnixPermission(targetPath, 0x1a4);
             theader.Mode = permission;
             if (uid.HasValue)
             {
@@ -284,7 +369,7 @@ namespace dotnet_compressor.Tar
         }
         uint GetRetryNum()
         {
-            if(!string.IsNullOrEmpty(RetryNumString) && !uint.TryParse(RetryNumString, out var retryNum))
+            if (!string.IsNullOrEmpty(RetryNumString) && !uint.TryParse(RetryNumString, out var retryNum))
             {
                 return retryNum;
             }
@@ -293,10 +378,36 @@ namespace dotnet_compressor.Tar
                 return 5;
             }
         }
+        void AddDirectoryEntry(TarOutputStream tarOutputStream, DirectoryInfo directory, FilePatternMatch m, IConsole console)
+        {
+            var header = new TarHeader();
+            var targetPath = Util.ReplaceRegexString(m.Stem, ReplaceFrom, ReplaceTo) + "/";
+            header.Name = targetPath;
+            header.ModTime = directory.LastWriteTimeUtc;
+            var (permission, uid, gid) = GetUnixPermission(targetPath, 0x1ed);
+            header.Mode = permission;
+            header.TypeFlag = 5;
+            if (uid.HasValue)
+            {
+                header.UserId = uid.Value;
+            }
+            if (gid.HasValue)
+            {
+                header.GroupId = gid.Value;
+            }
+            var entry = new TarEntry(header);
+            tarOutputStream.PutNextEntry(entry);
+            tarOutputStream.CloseEntry();
+            if(Verbose)
+            {
+                console.Error.WriteLine($"'{directory.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
+            }
+        }
         public int OnExecute(IConsole con)
         {
             try
             {
+                var RetryNum = GetRetryNum();
                 InitializePermissionMap();
                 var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
                 var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
@@ -313,17 +424,21 @@ namespace dotnet_compressor.Tar
                     matcher.AddInclude("**/*");
                 }
                 var di = new DirectoryInfo(string.IsNullOrEmpty(BaseDirectory) ? Directory.GetCurrentDirectory() : BaseDirectory);
-                var result = matcher.Execute(new DirectoryInfoWrapper(di));
-                if (result.HasMatches)
+                var result = matcher.Execute(new MyDirectoryInfo(di));
+                using (var ofstm = Util.OpenOutputStream(OutputPath, true))
+                using (var ostm = TarUtil.GetCompressionStream(ofstm, CompressionFormat, TarStreamDirection.Output))
+                using (var tstm = new TarOutputStream(ostm, enc))
                 {
-                    using (var ofstm = Util.OpenOutputStream(OutputPath, true))
-                    using (var ostm = TarUtil.GetCompressionStream(ofstm, CompressionFormat, TarStreamDirection.Output))
-                    using (var tstm = new TarOutputStream(ostm, enc))
+                    foreach (var fileInfo in result.Files)
                     {
-                        foreach (var fileInfo in result.Files)
+                        var filePath = Path.Combine(di.FullName, fileInfo.Path);
+                        if ((File.GetAttributes(filePath) & FileAttributes.Directory) == FileAttributes.Directory)
+                        {
+                            AddDirectoryEntry(tstm, new DirectoryInfo(filePath), fileInfo, con);
+                        }
+                        else
                         {
                             Exception exception = null;
-                            var RetryNum = GetRetryNum();
                             for (int i = 0; i < RetryNum; i++)
                             {
                                 exception = null;
@@ -362,13 +477,8 @@ namespace dotnet_compressor.Tar
                             }
                         }
                     }
-                    return 0;
                 }
-                else
-                {
-                    con.Error.WriteLine($"no file matched");
-                    return 2;
-                }
+                return 0;
             }
             catch (Exception e)
             {
