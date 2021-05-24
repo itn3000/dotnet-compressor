@@ -34,7 +34,7 @@
     <PackAsTool>true</PackAsTool>
   </PropertyGroup>
   <ItemGroup Condition="'$(WithCoreRT)' == 'true'">
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-preview.5.21269.2" />
     <!-- <RdXmlFile Include="rd.xml"/> -->
   </ItemGroup>
 

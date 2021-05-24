@@ -14,7 +14,8 @@ Setup(ctx =>
     {
         Configuration = ctx.Argument("Configuration", "Debug"),
         Runtime = ctx.Argument("Runtime", ""),
-        VersionSuffix = ctx.Argument("VersionSuffix", "")
+        VersionSuffix = ctx.Argument("VersionSuffix", ""),
+        TargetFramework = ctx.Argument("TargetFramework", "net5.0"),
     };
 });
 

@@ -1,4 +1,4 @@
-FilePath GetNativeExePath(string configuration, string rid)
+FilePath GetNativeExePath(string configuration, string rid, string targetFramework)
 {
     string exeExtension = "";
     if(Environment.OSVersion.Platform == PlatformID.Win32NT)
@@ -7,14 +7,14 @@ FilePath GetNativeExePath(string configuration, string rid)
     }
     return Directory("src").Path
         .Combine("dotnet-compressor")
-        .Combine("bin").Combine(configuration).Combine("netcoreapp3.1").Combine(rid).Combine("native")
+        .Combine("bin").Combine(configuration).Combine(targetFramework).Combine(rid).Combine("native")
         .CombineWithFilePath(File("dcomp") + exeExtension)
         ;
 }
 
-void TestNativeTar(string configuration, string rid)
+void TestNativeTar(string configuration, string rid, string targetFramework)
 {
-    var exePath = GetNativeExePath(configuration, rid);
+    var exePath = GetNativeExePath(configuration, rid, targetFramework);
     try
     {
         var settings = new ProcessSettings()
@@ -59,9 +59,9 @@ void TestNativeTar(string configuration, string rid)
     }
 }
 
-void TestNativeZip(string configuration, string rid)
+void TestNativeZip(string configuration, string rid, string targetFramework)
 {
-    var exePath = GetNativeExePath(configuration, rid);
+    var exePath = GetNativeExePath(configuration, rid, targetFramework);
     var settings = new ProcessSettings()
     {
         Arguments = new ProcessArgumentBuilder()
@@ -108,6 +108,7 @@ class NativeTestContext
     public string Configuration;
     public string Runtime;
     public string VersionSuffix;
+    public string TargetFramework;
 }
 
 Task("Native")
@@ -124,11 +125,11 @@ Task("Native.Test.Zip")
     .IsDependeeOf("Native.Test")
     .Does<NativeTestContext>((ctx) =>
     {
-        TestNativeZip(ctx.Configuration, ctx.Runtime);
+        TestNativeZip(ctx.Configuration, ctx.Runtime, ctx.TargetFramework);
     });
 Task("Native.Test.Tar")
     .IsDependeeOf("Native.Test")
-    .Does<NativeTestContext>((ctx) => TestNativeTar(ctx.Configuration, ctx.Runtime))
+    .Does<NativeTestContext>((ctx) => TestNativeTar(ctx.Configuration, ctx.Runtime, ctx.TargetFramework))
     ;
 Task("Native.Build")
     .IsDependentOn("Build")
