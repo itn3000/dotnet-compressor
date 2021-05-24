@@ -51,7 +51,7 @@ jobs:
       run: dotnet tool run dotnet-cake build.cake --Configuration=Release --IsRelease
       if: matrix.os == 'windows-latest' && startsWith(github.ref, 'refs/tags/')
     - name: Build with dotnet(Development)
-      run: dotnet tool run dotnet-cake build.cake -Configuration=Release
+      run: dotnet tool run dotnet-cake build.cake --Configuration=Release
       if: matrix.os == 'windows-latest' && !startsWith(github.ref, 'refs/tags/')
     - name: push development nuget package
       run: "dotnet tool run dotnet-cake build.cake \"--Configuration=Release\" \"--Target=NuGet.Push.GitHub\" \"--Username=itn3000\" \"--Password=${{ secrets.GITHUB_TOKEN }}\""
