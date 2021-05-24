@@ -24,11 +24,11 @@ jobs:
           - os: "ubuntu-18.04"
             rid: "osx-x64"
           - os: "windows-latest"
-            linker: "clang-8"
+            linker: "clang-9"
           - os: "ubuntu-18.04"
             linker: ""
           - os: "macos-latest"
-            linker: "clang-8"
+            linker: "clang-9"
     env:
       CppCompilerAndLinker: ${{ matrix.linker }}
     steps:
