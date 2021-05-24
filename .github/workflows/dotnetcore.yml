@@ -9,7 +9,7 @@ jobs:
       matrix:
         os: ["ubuntu-18.04", "windows-latest", "macos-latest"]
         rid: ["linux-x64", "win-x64", "osx-x64"]
-        linker: ["", "clang-8"]
+        linker: ["", "clang-9"]
         exclude:
           - os: "windows-latest"
             rid: "linux-x64"
