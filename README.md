@@ -37,7 +37,7 @@ Once you download it and add executable permission, you can execute it.
 
 if you want to use as dotnet global tool, do following steps.
 
-1. install [dotnet sdk](https://dotnet.microsoft.com/download) 2.1 or later
+1. install [dotnet sdk](https://dotnet.microsoft.com/download) 5.0 or later
 2. run `dotnet tool install -g dotnet-compressor`
 3. ensure `$HOME/.dotnet/tools` to your PATH
 
@@ -134,7 +134,7 @@ you can manupilate ZIP by `zip` subcommand.
 
 ## Prerequisits
 
-* dotnet-sdk 3.1
+* dotnet-sdk 5.0
 * mono(if linux or mac)
 * .NET Framework 4.6.1 or later(if windows)
 
