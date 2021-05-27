@@ -21,7 +21,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageId>dotnet-compressor</PackageId>
-    <VersionPrefix>1.1.0</VersionPrefix>
+    <VersionPrefix>1.2.0</VersionPrefix>
     <PackageDescription>dotnet compression/decompression tool</PackageDescription>
     <PackageProjectUrl>https://github.com/itn3000/dotnet-compressor</PackageProjectUrl>
     <PackageRepositoryUrl>https://github.com/itn3000/dotnet-compressor</PackageRepositoryUrl>
