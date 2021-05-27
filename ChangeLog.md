@@ -1,4 +1,5 @@
 * 1.2.0
+    * **update TargetFramework to net5.0**
     * add `--retry` to `tar c` and `zip c` command
     * add `--stop-on-error` to `tar c` and `zip c` command
     * add `--verbose` to `tar c` and `zip c` and `tar d` and `zip d` command
