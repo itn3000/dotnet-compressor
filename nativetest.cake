@@ -71,6 +71,8 @@ void TestNativeZip(string configuration, string rid, string targetFramework)
             .Append("-i").Append("test.txt")
             .Append("-p").Append("pass")
             .Append("-o").Append("test.zip")
+            .Append("--replace-from").Append("abc")
+            .Append("--replace-to").Append("def")
     };
     try
     {
@@ -87,6 +89,8 @@ void TestNativeZip(string configuration, string rid, string targetFramework)
                 .Append("-i").Append("test.zip")
                 .Append("-o").Append(".")
                 .Append("-p").Append("pass")
+                .Append("--replace-from").Append("abc")
+                .Append("--replace-to").Append("def")
         };
         exitCode = StartProcess(exePath, settings);
         if(exitCode != 0)
