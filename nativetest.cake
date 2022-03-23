@@ -144,6 +144,7 @@ Task("Native.Build")
         var msBuildSetting = new DotNetCoreMSBuildSettings()
             .WithProperty("WithCoreRT", "true")
             .WithProperty("RuntimeIdentifier", ctx.Runtime)
+            .WithProperty("TargetFramework", ctx.TargetFramework)
             ;
         if(!string.IsNullOrEmpty(ctx.VersionSuffix))
         {
@@ -154,7 +155,7 @@ Task("Native.Build")
             Configuration = ctx.Configuration,
             MSBuildSettings = msBuildSetting,
         };
-        DotNetCorePublish("src/dotnet-compressor/dotnet-compressor.csproj", setting);
+        DotNetPublish("src/dotnet-compressor/dotnet-compressor.csproj", setting);
         var distbindir = Directory("dist").Path.Combine(ctx.Configuration).Combine("bin");
         if(!DirectoryExists(distbindir))
         {
@@ -164,7 +165,7 @@ Task("Native.Build")
             .Combine("dotnet-compressor")
             .Combine("bin")
             .Combine(ctx.Configuration)
-            .Combine("net5.0")
+            .Combine(ctx.TargetFramework)
             .Combine(ctx.Runtime)
             .Combine("native").CombineWithFilePath("*").ToString()))
         {

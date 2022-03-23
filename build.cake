@@ -3,6 +3,7 @@ var Target = Argument("Target", "Default");
 var Runtime = Argument("Runtime", "");
 var VersionSuffix = Argument("VersionSuffix", "");
 var IsRelease = HasArgument("IsRelease");
+const string DefaultTargetFramework = "net6.0";
 
 #load "nativetest.cake"
 #load "nuget.cake"
@@ -15,7 +16,7 @@ Setup(ctx =>
         Configuration = ctx.Argument("Configuration", "Debug"),
         Runtime = ctx.Argument("Runtime", ""),
         VersionSuffix = ctx.Argument("VersionSuffix", ""),
-        TargetFramework = ctx.Argument("TargetFramework", "net6.0"),
+        TargetFramework = ctx.Argument("TargetFramework", DefaultTargetFramework),
     };
 });
 
@@ -27,7 +28,7 @@ Task("Default")
 Task("Restore")
     .Does(() =>
     {
-        DotNetCoreRestore("dotnet-compressor.slnproj");
+        DotNetRestore("dotnet-compressor.slnproj");
     });
 Task("Build")
     .IsDependentOn("Restore")
@@ -38,14 +39,14 @@ Task("Build")
             Configuration = Configuration,
             VersionSuffix = VersionSuffix,
         };
-        DotNetCoreBuild("dotnet-compressor.slnproj", setting);
+        DotNetBuild("dotnet-compressor.slnproj", setting);
     });
 Task("Test")
     .IsDependentOn("SlnGen")
     .IsDependentOn("Build")
     .Does(() =>
     {
-        DotNetCoreTest("dotnet-compressor.sln");
+        DotNetTest("dotnet-compressor.sln");
     });
 Task("Pack")
     .IsDependentOn("Build")
@@ -66,7 +67,7 @@ Task("Pack")
         {
             setting.Runtime = Runtime;
         }
-        DotNetCorePack("src/dotnet-compressor/dotnet-compressor.csproj", setting);
+        DotNetPack("src/dotnet-compressor/dotnet-compressor.csproj", setting);
     });
 Task("Publish")
     .IsDependentOn("Build")
@@ -78,7 +79,7 @@ Task("Publish")
             Runtime = Runtime,
             OutputDirectory = Directory("dist").Path.Combine(Configuration).Combine(Runtime)
         };
-        DotNetCorePublish(File("src/dotnet-compressor/dotnet-compressor.csproj"), setting);
+        DotNetPublish(File("src/dotnet-compressor/dotnet-compressor.csproj"), setting);
     });
 Task("SlnGen")
     .Does(() =>
