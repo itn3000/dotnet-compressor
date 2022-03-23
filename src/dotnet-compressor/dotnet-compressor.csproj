@@ -5,23 +5,23 @@
   </ItemGroup> -->
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandlineUtils" Version="3.1.0" />
-    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="5.0.0" />
-    <PackageReference Include="SharpZipLib" Version="1.3.1" />
-    <PackageReference Include="SharpCompress" Version="0.28.2" />
+    <PackageReference Include="McMaster.Extensions.CommandlineUtils" Version="4.0.1" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="6.0.0" />
+    <PackageReference Include="SharpZipLib" Version="1.3.3" />
+    <PackageReference Include="SharpCompress" Version="0.30.1" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>dotnet_compressor</RootNamespace>
     <AssemblyName>dcomp</AssemblyName>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageId>dotnet-compressor</PackageId>
-    <VersionPrefix>1.2.0</VersionPrefix>
+    <VersionPrefix>2.0.0</VersionPrefix>
     <PackageDescription>dotnet compression/decompression tool</PackageDescription>
     <PackageProjectUrl>https://github.com/itn3000/dotnet-compressor</PackageProjectUrl>
     <PackageRepositoryUrl>https://github.com/itn3000/dotnet-compressor</PackageRepositoryUrl>
@@ -34,7 +34,7 @@
     <PackAsTool>true</PackAsTool>
   </PropertyGroup>
   <ItemGroup Condition="'$(WithCoreRT)' == 'true'">
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-preview.5.21269.2" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />
     <!-- <RdXmlFile Include="rd.xml"/> -->
   </ItemGroup>
 
