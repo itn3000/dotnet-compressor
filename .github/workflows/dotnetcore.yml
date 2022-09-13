@@ -40,7 +40,7 @@ jobs:
     - name: Setup .NET Core 6.0
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: "6.0.401"
+        dotnet-version: "6.0.400"
     - name: restore dotnet tool
       run: dotnet tool restore
     - name: Build with dotnet(Release)
@@ -84,6 +84,10 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: "3.1.402"
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: "6.0.400"
       - name: restore dotnet tools
         run: dotnet tool restore
       - name: downloading nuget package
