@@ -27,17 +27,20 @@ namespace dotnet_compressor
         public string OutputFile { get; set; }
         [Option("-l|--level=<COMPRESSION_LEVEL>", "compression level(from 0 to 9, higher is more reducible)", CommandOptionType.SingleValue)]
         public string CompressionLevelString { get; set; }
-        int Level => !string.IsNullOrEmpty(CompressionLevelString) && int.TryParse(CompressionLevelString, out var x) ? x : 0;
+        int Level => !string.IsNullOrEmpty(CompressionLevelString) && int.TryParse(CompressionLevelString, out var x) ? x : -1;
         public int OnExecute(IConsole console)
         {
             try
             {
-                using(var istm = Util.OpenInputStream(InputFile))
-                using(var ostm = Util.OpenOutputStream(OutputFile, true))
+                using (var istm = Util.OpenInputStream(InputFile))
+                using (var ostm = Util.OpenOutputStream(OutputFile, true))
                 {
-                    using(var ozstm = new ICSharpCode.SharpZipLib.GZip.GZipOutputStream(ostm))
+                    using (var ozstm = new ICSharpCode.SharpZipLib.GZip.GZipOutputStream(ostm))
                     {
-                        ozstm.SetLevel(Level);
+                        if (Level >= 0)
+                        {
+                            ozstm.SetLevel(Level);
+                        }
                         istm.CopyTo(ozstm);
                     }
                 }
@@ -62,10 +65,10 @@ namespace dotnet_compressor
         {
             try
             {
-                using(var istm = Util.OpenInputStream(InputFile))
-                using(var ostm = Util.OpenOutputStream(OutputFile, true))
+                using (var istm = Util.OpenInputStream(InputFile))
+                using (var ostm = Util.OpenOutputStream(OutputFile, true))
                 {
-                    using(var izstm = new GZipInputStream(istm))
+                    using (var izstm = new GZipInputStream(istm))
                     {
                         izstm.CopyTo(ostm);
                     }

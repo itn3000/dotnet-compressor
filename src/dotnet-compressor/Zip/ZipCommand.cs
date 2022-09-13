@@ -166,9 +166,9 @@ namespace dotnet_compressor.Zip
         public bool Encryption { get; set; }
         [Option("--case-sensitive", "flag for case sensitivity on includes and excludes option(default: false)", CommandOptionType.NoValue)]
         public bool CaseSensitive { get; set; }
-        [Option("--level=<COMPRESSION_LEVEL>", "compression level(between 1 and 9)", CommandOptionType.SingleValue)]
+        [Option("--level=<COMPRESSION_LEVEL>", "compression level(between 0 and 9)", CommandOptionType.SingleValue)]
         public string CompressionLevelString { get; set; }
-        int CompressionLevel => !string.IsNullOrEmpty(CompressionLevelString) ? int.Parse(CompressionLevelString) : 0;
+        int CompressionLevel => !string.IsNullOrEmpty(CompressionLevelString) ? int.Parse(CompressionLevelString) : -1;
         [Option("--replace-from=<REGEXP>", "replace filename source regexp", CommandOptionType.SingleValue)]
         public string ReplaceFrom { get; set; }
         [Option("--replace-to=<REPLACE_TO>", "replace filename dest regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
@@ -206,7 +206,7 @@ namespace dotnet_compressor.Zip
                             zstm.Password = pass;
                         }
                     }
-                    if (CompressionLevel > 0)
+                    if (CompressionLevel >= 0)
                     {
                         zstm.SetLevel(CompressionLevel);
                     }

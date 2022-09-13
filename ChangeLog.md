@@ -1,3 +1,5 @@
+* 2.0.1
+    * fix default compression level(zip and gzip)
 * 2.0.0
     * **update TargetFramework to net6.0**
     * fix wrong typeflag of tar
