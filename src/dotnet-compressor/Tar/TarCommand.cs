@@ -386,7 +386,7 @@ namespace dotnet_compressor.Tar
             header.ModTime = directory.LastWriteTimeUtc;
             var (permission, uid, gid) = GetUnixPermission(targetPath, 0x1ed);
             header.Mode = permission;
-            header.TypeFlag = 5;
+            header.TypeFlag = (byte)'5';
             if (uid.HasValue)
             {
                 header.UserId = uid.Value;
