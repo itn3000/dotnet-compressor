@@ -1,5 +1,6 @@
 * 2.0.0
     * **update TargetFramework to net6.0**
+    * fix wrong typeflag of tar
 * 1.2.0
     * **update TargetFramework to net5.0**
     * add `--retry` to `tar c` and `zip c` command
