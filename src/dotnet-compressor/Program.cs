@@ -15,7 +15,7 @@ namespace dotnet_compressor
     {
         public void OnExecute(CommandLineApplication<RootCommand> application)
         {
-            Console.Error.WriteLine($"you must specify subcommand");
+            Console.Error.WriteLine($"you must specify subcommand({ApplicationVersion})");
             Console.Error.WriteLine(application.GetHelpText());
         }
         public string ApplicationVersion => typeof(Program).Assembly.GetName().Version.ToString();

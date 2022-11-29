@@ -74,10 +74,10 @@ namespace dotnet_compressor.Zip
         public void OnExecute(IConsole console)
         {
             var outdir = !string.IsNullOrEmpty(OutputDirectory) ? OutputDirectory : Directory.GetCurrentDirectory();
-            ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding).CodePage;
+            var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
             var matcher = GetMatcher();
             using (var istm = Util.OpenInputStream(InputPath))
-            using (var zstm = new ZipInputStream(istm))
+            using (var zstm = new ZipInputStream(istm, StringCodec.FromEncoding(enc)))
             {
                 zstm.Password = Util.GetPasswordString(Password, PassEnvironmentName);
                 var buf = new byte[8192];
@@ -110,7 +110,7 @@ namespace dotnet_compressor.Zip
                         {
                             fi.Directory.Create();
                         }
-                        if(Verbose)
+                        if (Verbose)
                         {
                             console.Error.WriteLine($"extracting {entry.Name} to {fi.FullName}");
                         }
@@ -181,7 +181,7 @@ namespace dotnet_compressor.Zip
         public bool Verbose { get; set; }
         uint GetRetryNum()
         {
-            if(!string.IsNullOrEmpty(RetryNumString) && uint.TryParse(RetryNumString, out var retryNum))
+            if (!string.IsNullOrEmpty(RetryNumString) && uint.TryParse(RetryNumString, out var retryNum))
             {
                 return retryNum;
             }
@@ -194,10 +194,10 @@ namespace dotnet_compressor.Zip
         {
             try
             {
-                ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8).CodePage;
+                var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
                 var basePath = !string.IsNullOrEmpty(BasePath) ? BasePath : Directory.GetCurrentDirectory();
                 using (var ostm = Util.OpenOutputStream(OutputPath, true))
-                using (var zstm = new ZipOutputStream(ostm))
+                using (var zstm = new ZipOutputStream(ostm, StringCodec.FromEncoding(enc)))
                 {
                     {
                         var pass = GetPasswordString();
@@ -225,7 +225,7 @@ namespace dotnet_compressor.Zip
                                 {
                                     var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
                                     var zentry = new ZipEntry(entryName);
-                                    if(Verbose)
+                                    if (Verbose)
                                     {
                                         console.Error.WriteLine($"{path} -> {entryName}");
                                     }
@@ -240,7 +240,7 @@ namespace dotnet_compressor.Zip
                                 }
                                 else
                                 {
-                                    if(Verbose)
+                                    if (Verbose)
                                     {
                                         console.Error.WriteLine($"{fi.FullName} does not exist, skipped");
                                     }
