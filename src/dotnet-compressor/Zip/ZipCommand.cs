@@ -56,7 +56,7 @@ namespace dotnet_compressor.Zip
         public bool Verbose { get; set; }
         Matcher GetMatcher()
         {
-            var matcher = new Matcher(StringComparison.CurrentCultureIgnoreCase);
+            var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
             if (Includes != null && Includes.Length != 0)
             {
                 matcher.AddIncludePatterns(Includes);
