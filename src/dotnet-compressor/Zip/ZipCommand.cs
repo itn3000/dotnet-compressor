@@ -18,8 +18,10 @@ namespace dotnet_compressor.Zip
 {
     static class Constants
     {
+        // from stat.st_mode
         public const int S_IFMT = 0xf000;
         public const int S_IFREG = 0x8000;
+        // from https://support.pkware.com/home/pkzip/developer-tools/appnote/
         public const int HostMSDOS = 0;
         public const int HostWinNTFS = 10;
         public const int HostUnix = 3;
