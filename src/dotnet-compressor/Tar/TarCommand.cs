@@ -53,7 +53,10 @@ namespace dotnet_compressor.Tar
                 if (fsi is DirectoryInfo di)
                 {
                     yield return new MyFileInfo(di.Name, di.FullName, new MyDirectoryInfo(_Directory));
-                    yield return new MyDirectoryInfo(di);
+                    if ((di.Attributes & FileAttributes.ReparsePoint) != FileAttributes.ReparsePoint)
+                    {
+                        yield return new MyDirectoryInfo(di);
+                    }
                 }
                 else if (fsi is FileInfo fi)
                 {
@@ -133,6 +136,44 @@ namespace dotnet_compressor.Tar
         public string ReplaceTo { get; set; }
         [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "decompress before tar extraction(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
         public string CompressionFormat { get; set; }
+        void ExtractFileEntry(TarInputStream tstm, string outdir, string entryKey, IConsole console, TarEntry entry)
+        {
+            var destfi = new FileInfo(Path.Combine(outdir, entryKey));
+            console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}");
+            if (!destfi.Directory.Exists)
+            {
+                destfi.Directory.Create();
+            }
+            if (entry.TarHeader.TypeFlag == (int)TarTypeFlag.Symlink)
+            {
+                var linkTarget = entry.TarHeader.LinkName;
+                destfi.CreateAsSymbolicLink(linkTarget);
+            }
+            else
+            {
+                using (var deststm = File.Create(destfi.FullName))
+                {
+                    if (entry.Size != 0)
+                    {
+                        var buf = new byte[4096];
+                        while (true)
+                        {
+                            var bytesread = tstm.Read(buf, 0, buf.Length);
+                            if (bytesread == 0)
+                            {
+                                break;
+                            }
+                            deststm.Write(buf, 0, bytesread);
+                        }
+                    }
+                }
+            }
+            destfi.LastWriteTime = entry.ModTime;
+            if (Util.IsPosix)
+            {
+                destfi.UnixFileMode = (UnixFileMode)(entry.TarHeader.Mode & 0xfff);
+            }
+        }
         public int OnExecute(IConsole console)
         {
             try
@@ -176,9 +217,16 @@ namespace dotnet_compressor.Tar
                         if (entry.IsDirectory)
                         {
                             var destdir = Path.Combine(outdir, entryKey);
-                            if (!Directory.Exists(destdir))
+                            if ((entry.TarHeader.Mode & TarUtil.S_IFLNK) != 0)
                             {
-                                Directory.CreateDirectory(destdir);
+                                Directory.CreateSymbolicLink(destdir, entry.TarHeader.LinkName);
+                            }
+                            else
+                            {
+                                if (!Directory.Exists(destdir))
+                                {
+                                    Directory.CreateDirectory(destdir);
+                                }
                             }
                         }
                         else
@@ -341,7 +389,7 @@ namespace dotnet_compressor.Tar
             theader.Name = targetPath;
             theader.Size = fi.Length;
             // default is 0644
-            var (permission, uid, gid) = GetUnixPermission(targetPath, 0x1a4);
+            var (permission, uid, gid) = GetUnixPermission(targetPath, Util.IsPosix ? (int)fi.UnixFileMode : 0x1a4);
             theader.Mode = permission;
             if (uid.HasValue)
             {
@@ -351,20 +399,36 @@ namespace dotnet_compressor.Tar
             {
                 theader.GroupId = gid.Value;
             }
-            var tentry = new TarEntry(theader);
-            tentry.Name = targetPath;
-            tstm.PutNextEntry(tentry);
             if (Verbose)
             {
                 con.Error.WriteLine($"'{fi.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
             }
-            if (fi.Length != 0)
+            if ((fi.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
             {
-                using (var fstm = fi.OpenRead())
-                {
-                    fstm.CopyTo(tstm);
-                }
+                theader.LinkName = fi.LinkTarget;
+                theader.Mode = 0x1ff;
+                theader.TypeFlag = (int)TarTypeFlag.Symlink;
+                var tentry = new TarEntry(theader);
+                tentry.Name = targetPath;
+                tstm.PutNextEntry(tentry);
+                var linkTargetBytes = Encoding.UTF8.GetBytes(fi.LinkTarget);
+                tstm.Write(linkTargetBytes.AsSpan());
                 tstm.CloseEntry();
+            }
+            else
+            {
+                theader.TypeFlag = (int)TarTypeFlag.Regular;
+                var tentry = new TarEntry(theader);
+                tentry.Name = targetPath;
+                tstm.PutNextEntry(tentry);
+                if (fi.Length != 0)
+                {
+                    using (var fstm = fi.OpenRead())
+                    {
+                        fstm.CopyTo(tstm);
+                    }
+                    tstm.CloseEntry();
+                }
             }
         }
         uint GetRetryNum()
@@ -395,10 +459,22 @@ namespace dotnet_compressor.Tar
             {
                 header.GroupId = gid.Value;
             }
+            if((directory.Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint)
+            {
+                header.LinkName = directory.LinkTarget;
+                header.Mode = 0x1ff;
+                header.TypeFlag = (int)TarTypeFlag.Symlink;
+                header.Name = header.Name.TrimEnd('/');
+                console.Error.WriteLine($"{header.Name} -> {header.LinkName}");
+            }
+            else
+            {
+                header.TypeFlag = (int)TarTypeFlag.Directory;
+            }
             var entry = new TarEntry(header);
             tarOutputStream.PutNextEntry(entry);
             tarOutputStream.CloseEntry();
-            if(Verbose)
+            if (Verbose)
             {
                 console.Error.WriteLine($"'{directory.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
             }
@@ -492,8 +568,15 @@ namespace dotnet_compressor.Tar
         Input,
         Output,
     }
+    enum TarTypeFlag
+    {
+        Regular = (int)'0',
+        Symlink = (int)'2',
+        Directory = (int)'5',
+    }
     static class TarUtil
     {
+        public const int S_IFLNK = 0xa000;
         static public Stream GetCompressionStream(Stream stm, string compressionFormat, TarStreamDirection direction)
         {
             if (string.IsNullOrEmpty(compressionFormat))

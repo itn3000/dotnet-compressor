@@ -95,6 +95,7 @@ namespace dotnet_compressor.Zip
                 console.Error.WriteLine($"extracting {entry.Name} to {fi.FullName}");
             }
             long totalread = 0;
+            
             using (var ofstm = File.Create(fi.FullName))
             {
                 if (entry.Size >= -1)
