@@ -64,7 +64,7 @@ namespace dotnet_compressor
         }
         public static IEnumerable<(string Path, string Stem)> GetFileList(string basedir, string[] includes, string[] excludes, bool ignoreCase)
         {
-            var matcher = new Microsoft.Extensions.FileSystemGlobbing.Matcher(ignoreCase ? StringComparison.CurrentCultureIgnoreCase : StringComparison.CurrentCulture);
+            var matcher = new Microsoft.Extensions.FileSystemGlobbing.Matcher(ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
             if (excludes != null)
             {
                 foreach (var exclude in excludes)

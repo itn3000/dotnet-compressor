@@ -1,0 +1,27 @@
+<Directives xmlns="http://schemas.microsoft.com/netfx/2013/01/metadata">
+    <Application>
+        <Assembly Name="dcomp">
+            <Type Name="dotnet_compressor.RootCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Zip.ZipCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Tar.TarCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.GZipCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.BZip2Command" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.LZipCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.XzCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.BZip2CompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.BZip2DecompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.GZipCompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.GZipDecompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.LZipCompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.LZipDecompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.XzDecompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Tar.TarDecompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Tar.TarCompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Zip.ZipCompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Zip.ZipDecompressCommand" Dynamic="Required All"/>
+        </Assembly>
+        <Assembly Name="SharpCompress">
+            <Type Name="SharpCompress.Compressors.Xz.Filters.Lzma2Filter" Dynamic="Required All"/>
+        </Assembly>
+    </Application>
+</Directives>

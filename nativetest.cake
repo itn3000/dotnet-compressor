@@ -5,9 +5,10 @@ FilePath GetNativeExePath(string configuration, string rid, string targetFramewo
     {
         exeExtension = ".exe";
     }
-    return Directory("src").Path
-        .Combine("dotnet-compressor")
-        .Combine("bin").Combine(configuration).Combine(targetFramework).Combine(rid).Combine("native")
+    return Directory("dist").Path
+        .Combine("native")
+        .Combine(configuration)
+        .Combine(rid)
         .CombineWithFilePath(File("dcomp") + exeExtension)
         ;
 }
@@ -154,26 +155,12 @@ Task("Native.Build")
         {
             msBuildSetting = msBuildSetting.WithProperty("VersionSuffix", ctx.VersionSuffix);
         }
+        var distbindir = Directory("dist").Path.Combine("native").Combine(ctx.Configuration).Combine(ctx.Runtime);
         var setting = new DotNetCorePublishSettings()
         {
             Configuration = ctx.Configuration,
             MSBuildSettings = msBuildSetting,
+            OutputDirectory = distbindir,
         };
         DotNetPublish("src/dotnet-compressor/dotnet-compressor.csproj", setting);
-        var distbindir = Directory("dist").Path.Combine(ctx.Configuration).Combine("bin");
-        if(!DirectoryExists(distbindir))
-        {
-            CreateDirectory(distbindir);
-        }
-        foreach(var f in GetFiles(Directory("src").Path
-            .Combine("dotnet-compressor")
-            .Combine("bin")
-            .Combine(ctx.Configuration)
-            .Combine(ctx.TargetFramework)
-            .Combine(ctx.Runtime)
-            .Combine("native").CombineWithFilePath("*").ToString()))
-        {
-            var destfile = distbindir.CombineWithFilePath($"{f.GetFilenameWithoutExtension()}-{ctx.Runtime}{f.GetExtension()}");
-            CopyFile(f, destfile);
-        }
     });

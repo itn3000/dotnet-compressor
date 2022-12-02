@@ -41,6 +41,10 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: "6.0.400"
+    - name: Setup .NET Core 7.0
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: "7.0.100"
     - name: restore dotnet tool
       run: dotnet tool restore
     - name: Build with dotnet(Release)
@@ -67,13 +71,13 @@ jobs:
     - name: build native binary
       run: "dotnet tool run dotnet-cake build.cake \"--Configuration=Release\" \"--Target=Native\" \"--Runtime=${{matrix.rid}}\""
     - name: stripping binary
-      run: strip dist/Release/bin/dcomp-${{matrix.rid}}
+      run: strip dist/native/Release/${{matrix.rid}}/dcomp
       if: matrix.os != 'windows-latest'
     - name: collect native binary as artifact
       uses: actions/upload-artifact@v1
       with:
         name: bin-${{matrix.rid}}
-        path: dist/Release/bin
+        path: dist/native/Release/${{matrix.rid}}
   release:
     runs-on: "windows-latest"
     needs: ["build"]
@@ -87,7 +91,7 @@ jobs:
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: "6.0.400"
+          dotnet-version: "7.0.100"
       - name: restore dotnet tools
         run: dotnet tool restore
       - name: downloading nuget package
@@ -151,7 +155,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: osx-x64/dcomp-osx-x64
+          asset_path: osx-x64/dcomp
           asset_name: dcomp-osx-x64
           asset_content_type: application/octet-binary
       - name: publish linux binary as github release assets
@@ -160,7 +164,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: linux-x64/dcomp-linux-x64
+          asset_path: linux-x64/dcomp
           asset_name: dcomp-linux-x64
           asset_content_type: application/octet-binary
       - name: publish windows binary as github release assets
@@ -169,7 +173,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: win-x64/dcomp-win-x64.exe
+          asset_path: win-x64/dcomp.exe
           asset_name: dcomp-win-x64.exe
           asset_content_type: application/octet-binary
       - name: publish windows binary pdb as github release assets
@@ -178,7 +182,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{steps.create_release.outputs.upload_url}}
-          asset_path: win-x64/dcomp-win-x64.pdb
+          asset_path: win-x64/dcomp.pdb
           asset_name: dcomp-win-x64.pdb
           asset_content_type: application/octet-binary
       - name: upload nupkg to nugetorg

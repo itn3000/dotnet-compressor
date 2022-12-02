@@ -16,6 +16,16 @@ using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace dotnet_compressor.Zip
 {
+    static class Constants
+    {
+        // from stat.st_mode
+        public const int S_IFMT = 0xf000;
+        public const int S_IFREG = 0x8000;
+        // from https://support.pkware.com/home/pkzip/developer-tools/appnote/
+        public const int HostMSDOS = 0;
+        public const int HostWinNTFS = 10;
+        public const int HostUnix = 3;
+    }
     [Command("zip")]
     [Subcommand(typeof(ZipCompressCommand))]
     [Subcommand(typeof(ZipDecompressCommand))]
@@ -56,7 +66,7 @@ namespace dotnet_compressor.Zip
         public bool Verbose { get; set; }
         Matcher GetMatcher()
         {
-            var matcher = new Matcher(StringComparison.CurrentCultureIgnoreCase);
+            var matcher = new Matcher(StringComparison.OrdinalIgnoreCase);
             if (Includes != null && Includes.Length != 0)
             {
                 matcher.AddIncludePatterns(Includes);
@@ -71,13 +81,60 @@ namespace dotnet_compressor.Zip
             }
             return matcher;
         }
+        void ExtractFileEntry(ZipInputStream zstm, ZipEntry entry, string outdir, IConsole console, byte[] buf)
+        {
+            var entryName = !string.IsNullOrEmpty(ReplaceFrom) && !string.IsNullOrEmpty(ReplaceTo) ?
+                Regex.Replace(entry.Name, ReplaceFrom, ReplaceTo) : entry.Name;
+            var fi = new FileInfo(Path.Combine(outdir, entryName));
+            if (!fi.Directory.Exists)
+            {
+                fi.Directory.Create();
+            }
+            if (Verbose)
+            {
+                console.Error.WriteLine($"extracting {entry.Name} to {fi.FullName}");
+            }
+            long totalread = 0;
+            using (var ofstm = File.Create(fi.FullName))
+            {
+                if (entry.Size >= -1)
+                {
+                    while (totalread < entry.Size)
+                    {
+                        var bytesread = zstm.Read(buf, 0, (int)Math.Min(entry.Size - totalread, buf.Length));
+                        ofstm.Write(buf, 0, bytesread);
+                        totalread += bytesread;
+                    }
+                }
+                else
+                {
+                    while (true)
+                    {
+                        var bytesread = zstm.Read(buf, 0, buf.Length);
+                        ofstm.Write(buf, 0, bytesread);
+                        if (bytesread < buf.Length)
+                        {
+                            break;
+                        }
+                    }
+                }
+            }
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT && entry.HostSystem == Constants.HostUnix)
+            {
+                if ((entry.ExternalFileAttributes & Constants.S_IFMT) == Constants.S_IFREG)
+                {
+                    var permission = (entry.ExternalFileAttributes >> 16) & (Constants.S_IFMT ^ 0xffff);
+                    fi.UnixFileMode = (UnixFileMode)permission;
+                }
+            }
+        }
         public void OnExecute(IConsole console)
         {
             var outdir = !string.IsNullOrEmpty(OutputDirectory) ? OutputDirectory : Directory.GetCurrentDirectory();
-            ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding).CodePage;
+            var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
             var matcher = GetMatcher();
             using (var istm = Util.OpenInputStream(InputPath))
-            using (var zstm = new ZipInputStream(istm))
+            using (var zstm = new ZipInputStream(istm, StringCodec.FromEncoding(enc)))
             {
                 zstm.Password = Util.GetPasswordString(Password, PassEnvironmentName);
                 var buf = new byte[8192];
@@ -103,42 +160,7 @@ namespace dotnet_compressor.Zip
                     }
                     else if (entry.IsFile)
                     {
-                        var entryName = !string.IsNullOrEmpty(ReplaceFrom) && !string.IsNullOrEmpty(ReplaceTo) ?
-                            Regex.Replace(entry.Name, ReplaceFrom, ReplaceTo) : entry.Name;
-                        var fi = new FileInfo(Path.Combine(outdir, entryName));
-                        if (!fi.Directory.Exists)
-                        {
-                            fi.Directory.Create();
-                        }
-                        if(Verbose)
-                        {
-                            console.Error.WriteLine($"extracting {entry.Name} to {fi.FullName}");
-                        }
-                        long totalread = 0;
-                        using (var ofstm = File.Create(fi.FullName))
-                        {
-                            if (entry.Size >= -1)
-                            {
-                                while (totalread < entry.Size)
-                                {
-                                    var bytesread = zstm.Read(buf, 0, (int)Math.Min(entry.Size - totalread, buf.Length));
-                                    ofstm.Write(buf, 0, bytesread);
-                                    totalread += bytesread;
-                                }
-                            }
-                            else
-                            {
-                                while (true)
-                                {
-                                    var bytesread = zstm.Read(buf, 0, buf.Length);
-                                    ofstm.Write(buf, 0, bytesread);
-                                    if (bytesread < buf.Length)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-                        }
+                        ExtractFileEntry(zstm, entry, outdir, console, buf);
                     }
                 }
             }
@@ -181,7 +203,7 @@ namespace dotnet_compressor.Zip
         public bool Verbose { get; set; }
         uint GetRetryNum()
         {
-            if(!string.IsNullOrEmpty(RetryNumString) && uint.TryParse(RetryNumString, out var retryNum))
+            if (!string.IsNullOrEmpty(RetryNumString) && uint.TryParse(RetryNumString, out var retryNum))
             {
                 return retryNum;
             }
@@ -190,14 +212,36 @@ namespace dotnet_compressor.Zip
                 return 5;
             }
         }
+        void AddFileEntry(ZipOutputStream zstm, string stem, string path, IConsole console, FileInfo fi)
+        {
+            var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
+            var zentry = new ZipEntry(entryName);
+            if (Verbose)
+            {
+                console.Error.WriteLine($"{path} -> {entryName}");
+            }
+            zentry.DateTime = fi.LastWriteTime;
+            if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+            {
+                zentry.ExternalFileAttributes = ((int)fi.UnixFileMode | Constants.S_IFREG) << 16;
+                zentry.HostSystem = Constants.HostUnix;
+            }
+            using (var istm = fi.OpenRead())
+            {
+                zentry.Size = istm.Length;
+                zstm.PutNextEntry(zentry);
+                istm.CopyTo(zstm);
+            }
+            zstm.CloseEntry();
+        }
         public int OnExecute(IConsole console)
         {
             try
             {
-                ZipStrings.CodePage = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8).CodePage;
+                var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
                 var basePath = !string.IsNullOrEmpty(BasePath) ? BasePath : Directory.GetCurrentDirectory();
                 using (var ostm = Util.OpenOutputStream(OutputPath, true))
-                using (var zstm = new ZipOutputStream(ostm))
+                using (var zstm = new ZipOutputStream(ostm, StringCodec.FromEncoding(enc)))
                 {
                     {
                         var pass = GetPasswordString();
@@ -223,24 +267,11 @@ namespace dotnet_compressor.Zip
                                 var fi = new FileInfo(Path.Combine(basePath, path));
                                 if (fi.Exists)
                                 {
-                                    var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
-                                    var zentry = new ZipEntry(entryName);
-                                    if(Verbose)
-                                    {
-                                        console.Error.WriteLine($"{path} -> {entryName}");
-                                    }
-                                    zentry.DateTime = fi.LastWriteTime;
-                                    using (var istm = fi.OpenRead())
-                                    {
-                                        zentry.Size = istm.Length;
-                                        zstm.PutNextEntry(zentry);
-                                        istm.CopyTo(zstm);
-                                    }
-                                    zstm.CloseEntry();
+                                    AddFileEntry(zstm, stem, path, console, fi);
                                 }
                                 else
                                 {
-                                    if(Verbose)
+                                    if (Verbose)
                                     {
                                         console.Error.WriteLine($"{fi.FullName} does not exist, skipped");
                                     }
