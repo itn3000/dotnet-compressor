@@ -183,29 +183,7 @@ namespace dotnet_compressor.Tar
                         }
                         else
                         {
-                            var destfi = new FileInfo(Path.Combine(outdir, entryKey));
-                            console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}");
-                            if (!destfi.Directory.Exists)
-                            {
-                                destfi.Directory.Create();
-                            }
-                            using (var deststm = File.Create(destfi.FullName))
-                            {
-                                if (entry.Size != 0)
-                                {
-                                    var buf = new byte[4096];
-                                    while (true)
-                                    {
-                                        var bytesread = tstm.Read(buf, 0, buf.Length);
-                                        if (bytesread == 0)
-                                        {
-                                            break;
-                                        }
-                                        deststm.Write(buf, 0, bytesread);
-                                    }
-                                }
-                            }
-                            destfi.LastWriteTime = entry.ModTime;
+                            OutputTarEntryToFile(tstm, entry, entryKey, outdir, console);
                         }
                     }
                 }
@@ -217,7 +195,38 @@ namespace dotnet_compressor.Tar
                 return 1;
             }
         }
+        void OutputTarEntryToFile(TarInputStream tstm, TarEntry entry, string entryKey, string outdir, IConsole console)
+        {
+            var destfi = new FileInfo(Path.Combine(outdir, entryKey));
+            console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}");
+            if (!destfi.Directory.Exists)
+            {
+                destfi.Directory.Create();
+            }
+            using (var deststm = File.Create(destfi.FullName))
+            {
+                if (entry.Size != 0)
+                {
+                    var buf = new byte[4096];
+                    while (true)
+                    {
+                        var bytesread = tstm.Read(buf, 0, buf.Length);
+                        if (bytesread == 0)
+                        {
+                            break;
+                        }
+                        deststm.Write(buf, 0, bytesread);
+                    }
+                }
+            }
+            destfi.LastWriteTime = entry.ModTime;
+            if(Environment.OSVersion.Platform != PlatformID.Win32NT)
+            {
+                destfi.UnixFileMode = (UnixFileMode)entry.TarHeader.Mode;
+            }
+        }
     }
+
     class PermissionMapElement
     {
         public Regex Re { get; set; }
@@ -340,8 +349,13 @@ namespace dotnet_compressor.Tar
             var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
             theader.Name = targetPath;
             theader.Size = fi.Length;
+            var (permission, uid, gid) = Environment.OSVersion.Platform switch
+            {
+                PlatformID.Win32NT => GetUnixPermission(targetPath, 0x1a4),
+                _ => GetUnixPermission(targetPath, (int)fi.UnixFileMode)
+            };
             // default is 0644
-            var (permission, uid, gid) = GetUnixPermission(targetPath, 0x1a4);
+            // var (permission, uid, gid) = GetUnixPermission(targetPath, 0x1a4);
             theader.Mode = permission;
             if (uid.HasValue)
             {
@@ -398,7 +412,7 @@ namespace dotnet_compressor.Tar
             var entry = new TarEntry(header);
             tarOutputStream.PutNextEntry(entry);
             tarOutputStream.CloseEntry();
-            if(Verbose)
+            if (Verbose)
             {
                 console.Error.WriteLine($"'{directory.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
             }
