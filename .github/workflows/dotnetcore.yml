@@ -13,7 +13,7 @@ jobs:
             linker: "clang-10"
           - os: "windows-latest"
             rid: "win-x64"
-          - os: "macos-latest"
+          - os: "macos-11"
             rid: "osx-x64"
     env:
       CppCompilerAndLinker: ${{ matrix.linker }}
