@@ -15,6 +15,13 @@ namespace DotNet.Compressor.Test
         {
 
         }
+        public void Cancel()
+        {
+            if(CancelKeyPress != null)
+            {
+                CancelKeyPress(this, null);
+            }
+        }
         public DummyConsole(string input)
         {
             _Input = input;
