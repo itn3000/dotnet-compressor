@@ -1,3 +1,7 @@
+* 3.0.0
+    * update TargetFramework to net7.0
+    * support symbolic link in tar and zip
+    * support saving and restoring unixfilemode in tar and zip if running on mac or linux
 * 2.0.1
     * fix default compression level(zip and gzip)
 * 2.0.0
