@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ["ubuntu-20.04", "windows-latest", "macos-latest"]
+        os: ["ubuntu-18.04", "windows-latest", "macos-latest"]
         rid: ["linux-x64", "win-x64", "osx-x64"]
         linker: ["", "clang-10"]
         exclude:
@@ -15,17 +15,17 @@ jobs:
             rid: "linux-x64"
           - os: "macos-latest"
             rid: "linux-x64"
-          - os: "ubuntu-20.04"
+          - os: "ubuntu-18.04"
             rid: "win-x64"
           - os: "macos-latest"
             rid: "win-x64"
           - os: "windows-latest"
             rid: "osx-x64"
-          - os: "ubuntu-20.04"
+          - os: "ubuntu-18.04"
             rid: "osx-x64"
           - os: "windows-latest"
             linker: "clang-10"
-          - os: "ubuntu-20.04"
+          - os: "ubuntu-18.04"
             linker: ""
           - os: "macos-latest"
             linker: "clang-10"
@@ -56,10 +56,10 @@ jobs:
       if: matrix.os == 'windows-latest'
     - name: update apt cache
       run: sudo apt-get update 
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-18.04'
     - name: installing prerequisit packages for corert
       run: sudo apt-get install -y libkrb5-dev zlib1g-dev
-      if: matrix.os == 'ubuntu-20.04'
+      if: matrix.os == 'ubuntu-18.04'
     - name: build native binary
       run: "dotnet tool run dotnet-cake build.cake \"--Configuration=Release\" \"--Target=Native\" \"--Runtime=${{matrix.rid}}\""
     - name: stripping binary
