@@ -70,7 +70,7 @@ namespace dotnet_compressor.Tar
                 }
             }
             destfi.LastWriteTime = entry.ModTime;
-            if (Util.IsPosix)
+            if (!OperatingSystem.IsWindows())
             {
                 destfi.UnixFileMode = (UnixFileMode)(entry.TarHeader.Mode & 0xfff);
             }
@@ -175,7 +175,7 @@ namespace dotnet_compressor.Tar
                     }
                 }
                 destfi.LastWriteTime = entry.ModTime;
-                if (Environment.OSVersion.Platform != PlatformID.Win32NT)
+                if (!OperatingSystem.IsWindows())
                 {
                     destfi.UnixFileMode = (UnixFileMode)entry.TarHeader.Mode;
                 }

@@ -129,11 +129,7 @@ namespace dotnet_compressor.Tar
             var targetPath = Util.ReplaceRegexString(fileInfo.Stem, ReplaceFrom, ReplaceTo);
             theader.Name = targetPath;
             theader.Size = fi.Length;
-            var (permission, uid, gid) = Environment.OSVersion.Platform switch
-            {
-                PlatformID.Win32NT => GetUnixPermission(targetPath, 0x1a4),
-                _ => GetUnixPermission(targetPath, (int)fi.UnixFileMode)
-            };
+            var (permission, uid, gid) = OperatingSystem.IsWindows() ? GetUnixPermission(targetPath, 0x1a4) : GetUnixPermission(targetPath, (int)fi.UnixFileMode);
             // default is 0644
             // var (permission, uid, gid) = GetUnixPermission(targetPath, 0x1a4);
             theader.Mode = permission;

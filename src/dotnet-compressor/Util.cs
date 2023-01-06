@@ -11,7 +11,7 @@ namespace dotnet_compressor
 {
     static class Util
     {
-        public static bool IsPosix => Environment.OSVersion.Platform != PlatformID.Win32NT;
+        public static bool IsPosix => !OperatingSystem.IsWindows();
         public static Encoding GetEncodingFromName(string name, Encoding defaultEncoding = null)
         {
             if (defaultEncoding == null)
