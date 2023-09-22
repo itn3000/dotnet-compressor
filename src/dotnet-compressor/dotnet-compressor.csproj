@@ -9,8 +9,9 @@
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="7.0.0" />
-    <PackageReference Include="SharpZipLib" Version="1.4.1" />
-    <PackageReference Include="SharpCompress" Version="0.32.2" />
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+    <PackageReference Include="SharpCompress" Version="0.34.0" />
+    <PackageReference Include="ZstdSharp.Port" Version="0.7.2" />
   </ItemGroup>
 
   <PropertyGroup>
@@ -21,7 +22,7 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageId>dotnet-compressor</PackageId>
-    <VersionPrefix>3.0.0</VersionPrefix>
+    <VersionPrefix>3.1.0</VersionPrefix>
     <PackageDescription>dotnet compression/decompression tool</PackageDescription>
     <PackageProjectUrl>https://github.com/itn3000/dotnet-compressor</PackageProjectUrl>
     <PackageRepositoryUrl>https://github.com/itn3000/dotnet-compressor</PackageRepositoryUrl>
@@ -37,7 +38,7 @@
     <PublishAot>true</PublishAot>
   </PropertyGroup>
   <ItemGroup Condition="'$(WithCoreRT)' == 'true'">
-    <RdXmlFile Include="rd.xml"/>
+    <RdXmlFile Include="rd.xml" />
   </ItemGroup>
 
 </Project>

@@ -1,18 +1,4 @@
 using McMaster.Extensions.CommandLineUtils;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Text;
-using System.Text.RegularExpressions;
-using SharpCompress.Archives;
-using SharpCompress.Writers.Zip;
-using SharpCompress.Common;
-using SharpCompress.Compressors;
-using SharpCompress.Crypto;
-using System.IO;
-using ICSharpCode.SharpZipLib.Zip;
-using ICSharpCode.SharpZipLib.Core;
-using System.IO.Compression;
-using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace dotnet_compressor.Zip
 {

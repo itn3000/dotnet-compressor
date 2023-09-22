@@ -19,6 +19,9 @@
             <Type Name="dotnet_compressor.Tar.TarCompressCommand" Dynamic="Required All"/>
             <Type Name="dotnet_compressor.Zip.ZipCompressCommand" Dynamic="Required All"/>
             <Type Name="dotnet_compressor.Zip.ZipDecompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Zstd.ZstdCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Zstd.ZstdCompressCommand" Dynamic="Required All"/>
+            <Type Name="dotnet_compressor.Zstd.ZstdDecompressCommand" Dynamic="Required All"/>
         </Assembly>
         <Assembly Name="SharpCompress">
             <Type Name="SharpCompress.Compressors.Xz.Filters.Lzma2Filter" Dynamic="Required All"/>

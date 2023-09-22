@@ -62,13 +62,17 @@ namespace dotnet_compressor.Zip
                 return 5;
             }
         }
-        void AddFileEntry(ZipOutputStream zstm, string stem, string path, IConsole console, FileInfo fi)
+        void AddFileEntry(ZipOutputStream zstm, string stem, string path, IConsole console, FileInfo fi, bool isUtf8)
         {
             var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
             var zentry = new ZipEntry(entryName);
             if (Verbose)
             {
                 console.Error.WriteLine($"{path} -> {entryName}");
+            }
+            if(isUtf8)
+            {
+                zentry.IsUnicodeText = true;
             }
             zentry.DateTime = fi.LastWriteTime;
             if (!OperatingSystem.IsWindows())
@@ -89,6 +93,7 @@ namespace dotnet_compressor.Zip
             try
             {
                 var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
+                var isUnicode = enc.WebName.Equals(Encoding.UTF8.WebName, StringComparison.OrdinalIgnoreCase);
                 var basePath = !string.IsNullOrEmpty(BasePath) ? BasePath : Directory.GetCurrentDirectory();
                 using (var ostm = Util.OpenOutputStream(OutputPath, true))
                 using (var zstm = new ZipOutputStream(ostm, StringCodec.FromEncoding(enc)))
@@ -117,7 +122,7 @@ namespace dotnet_compressor.Zip
                                 var fi = new FileInfo(Path.Combine(basePath, path));
                                 if (fi.Exists)
                                 {
-                                    AddFileEntry(zstm, stem, path, console, fi);
+                                    AddFileEntry(zstm, stem, path, console, fi, isUnicode);
                                 }
                                 else
                                 {
