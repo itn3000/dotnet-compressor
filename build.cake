@@ -34,7 +34,7 @@ Task("Build")
     .IsDependentOn("Restore")
     .Does(() =>
     {
-        var setting = new DotNetCoreBuildSettings()
+        var setting = new DotNetBuildSettings()
         {
             Configuration = Configuration,
             VersionSuffix = VersionSuffix,
@@ -56,7 +56,7 @@ Task("Pack")
         {
             VersionSuffix = "alpha-" + DateTime.Now.ToString("yyyyMMddHHmmss");
         }
-        var setting = new DotNetCorePackSettings()
+        var setting = new DotNetPackSettings()
         {
             Configuration = Configuration,
             NoBuild = true,
@@ -73,7 +73,7 @@ Task("Publish")
     .IsDependentOn("Build")
     .Does(() =>
     {
-        var setting = new DotNetCorePublishSettings()
+        var setting = new DotNetPublishSettings()
         {
             Configuration = Configuration,
             Runtime = Runtime,

@@ -7,7 +7,7 @@ namespace dotnet_compressor.Zstd;
 
 [Command("d", "decompression", Description = "zstandard decompression command")]
 [HelpOption]
-class ZstdDeompressCommand
+class ZstdDecompressCommand
 {
     [Option("-i|--input=<INPUT_FILE>", "input file path(default: standard input)", CommandOptionType.SingleValue)]
     public string InputFile { get; set; }

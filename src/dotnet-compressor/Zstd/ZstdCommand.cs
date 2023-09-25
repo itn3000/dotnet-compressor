@@ -4,7 +4,7 @@ namespace dotnet_compressor.Zstd;
 
 [Command("zstandard", "zstd", Description = "zstandard command")]
 [Subcommand(typeof(ZstdCompressCommand))]
-[Subcommand(typeof(ZstdDeompressCommand))]
+[Subcommand(typeof(ZstdDecompressCommand))]
 public class ZstdCommand
 {
         public void OnExecute(CommandLineApplication<ZstdCommand> application, IConsole con)

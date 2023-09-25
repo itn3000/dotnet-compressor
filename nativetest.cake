@@ -146,7 +146,7 @@ Task("Native.Build")
         }
         var props = new Dictionary<string, string[]>();
         props["WithCoreRT"] = new string[] { "true" };
-        var msBuildSetting = new DotNetCoreMSBuildSettings()
+        var msBuildSetting = new DotNetMSBuildSettings()
             .WithProperty("WithCoreRT", "true")
             .WithProperty("RuntimeIdentifier", ctx.Runtime)
             .WithProperty("TargetFramework", ctx.TargetFramework)
@@ -156,7 +156,7 @@ Task("Native.Build")
             msBuildSetting = msBuildSetting.WithProperty("VersionSuffix", ctx.VersionSuffix);
         }
         var distbindir = Directory("dist").Path.Combine("native").Combine(ctx.Configuration).Combine(ctx.Runtime);
-        var setting = new DotNetCorePublishSettings()
+        var setting = new DotNetPublishSettings()
         {
             Configuration = ctx.Configuration,
             MSBuildSettings = msBuildSetting,
