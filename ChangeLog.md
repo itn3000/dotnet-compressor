@@ -1,3 +1,5 @@
+* 3.1.0
+    * add zstd subcommand
 * 3.0.0
     * update TargetFramework to net7.0
     * support symbolic link in tar and zip

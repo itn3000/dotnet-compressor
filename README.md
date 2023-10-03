@@ -130,6 +130,13 @@ you can manupilate ZIP by `zip` subcommand.
 * archiving files under `dir1` and compressing by gzip: `dcomp tar c -b dir1 | dcomp gz c -o dir1.tgz`
 * extracting from `dir1.tgz` into `dir1`: `dcomp gz d -i dir1.tgz|dcomp tar d -o dir1`
 
+## ZStandard
+
+### Basic Usage
+
+* compressing `test.txt` and output to `test.zstd`: `dcomp zstd c -i test.txt -o test.zstd`
+* decompressing `test.zstd` and output to `test.txt`: `dcomp zstd d -i test.zstd -o test.txt`
+
 # How to build
 
 ## Prerequisits
