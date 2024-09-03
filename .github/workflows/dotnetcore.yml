@@ -70,22 +70,22 @@ jobs:
       - name: restore dotnet tools
         run: dotnet tool restore
       - name: downloading nuget package
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: "nupkg-win-x64"
           path: nupkg
       - name: downloading win-x64 binary
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: "bin-win-x64"
           path: win-x64
       - name: downloading osx-x64 binary
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: "bin-osx-x64"
           path: osx-x64
       - name: downloading linux-x64 binary
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v4.1.7
         with:
           name: "bin-linux-x64"
           path: linux-x64
