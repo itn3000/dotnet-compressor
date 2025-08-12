@@ -1,9 +1,0 @@
-<Project Sdk="MSBuild.SolutionSdk/0.1.0">
-    <PropertyGroup>
-        <EnableDefaultProjectItems>false</EnableDefaultProjectItems>
-    </PropertyGroup>
-    <ItemGroup>
-        <Project Include="src/**/*.csproj"/>
-        <Project Include="test/**/*.csproj"/>
-    </ItemGroup>
-</Project>

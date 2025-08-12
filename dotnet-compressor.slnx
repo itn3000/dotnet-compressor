@@ -1,0 +1,11 @@
+<Solution>
+  <Configurations>
+    <Platform Name="AnyCPU" />
+  </Configurations>
+  <Project Path="src/dotnet-compressor/dotnet-compressor.csproj">
+    <BuildType Project="Debug" />
+  </Project>
+  <Project Path="test/DotNet.Compressor.Test/DotNet.Compressor.Test.csproj">
+    <BuildType Project="Debug" />
+  </Project>
+</Solution>

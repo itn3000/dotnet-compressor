@@ -25,13 +25,7 @@ Task("Default")
     .IsDependentOn("Pack")
     ;
 
-Task("Restore")
-    .Does(() =>
-    {
-        DotNetRestore("dotnet-compressor.slnproj");
-    });
 Task("Build")
-    .IsDependentOn("Restore")
     .Does(() =>
     {
         var setting = new DotNetBuildSettings()
@@ -39,14 +33,13 @@ Task("Build")
             Configuration = Configuration,
             VersionSuffix = VersionSuffix,
         };
-        DotNetBuild("dotnet-compressor.slnproj", setting);
+        DotNetBuild("dotnet-compressor.slnx", setting);
     });
 Task("Test")
-    .IsDependentOn("SlnGen")
     .IsDependentOn("Build")
     .Does(() =>
     {
-        DotNetTest("dotnet-compressor.sln");
+        DotNetTest("dotnet-compressor.slnx");
     });
 Task("Pack")
     .IsDependentOn("Build")
@@ -81,15 +74,4 @@ Task("Publish")
         };
         DotNetPublish(File("src/dotnet-compressor/dotnet-compressor.csproj"), setting);
     });
-Task("SlnGen")
-    .Does(() =>
-    {
-        var msbuildSetting = new MSBuildSettings()
-        {
-            Verbosity = Verbosity.Normal
-        };
-        msbuildSetting = msbuildSetting.WithTarget("SlnGen");
-        MSBuild("dotnet-compressor.slngenproj", msbuildSetting);
-    });
-
 RunTarget(Target);
