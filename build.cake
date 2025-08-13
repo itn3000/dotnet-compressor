@@ -52,7 +52,6 @@ Task("Pack")
         var setting = new DotNetPackSettings()
         {
             Configuration = Configuration,
-            NoBuild = true,
             OutputDirectory = $"dist/{Configuration}/nupkg",
             VersionSuffix = VersionSuffix,
         };
