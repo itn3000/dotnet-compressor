@@ -16,7 +16,7 @@ jobs:
             rid: "win-x64"
             imagetype: windows
           - os: "macos-13"
-            rid: "osx-arm64"
+            rid: "osx-x64"
             imagetype: mac
     env:
       CppCompilerAndLinker: ${{ matrix.linker }}
