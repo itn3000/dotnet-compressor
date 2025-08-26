@@ -1,0 +1,109 @@
+name: .NET Binary Release
+on:
+  release:
+    - created
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: "ubuntu-24.04"
+            rid: "linux-x64"
+            linker: "clang-16"
+            imagetype: ubuntu
+          - os: "windows-latest"
+            rid: "win-x64"
+            imagetype: windows
+          - os: "macos-13"
+            rid: "osx-arm64"
+            imagetype: mac
+    env:
+      CppCompilerAndLinker: ${{ matrix.linker }}
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+      - name: restore dotnet tool
+        run: dotnet tool restore
+      - name: Build with dotnet(Release)
+        run: dotnet tool run dotnet-cake build.cake --Configuration=Release --IsRelease
+        if: matrix.imagetype == 'windows'
+      - name: collect nuget package as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg-${{matrix.rid}}
+          path: dist/Release/nupkg
+        if: matrix.imagetype == 'windows'
+      - name: update apt cache
+        run: sudo apt-get update 
+        if: matrix.imagetype == 'ubuntu'
+      - name: installing prerequisit packages for corert
+        run: sudo apt-get install -y libkrb5-dev zlib1g-dev
+        if: matrix.imagetype == 'ubuntu'
+      - name: build native binary
+        run: "dotnet tool run dotnet-cake build.cake \"--Configuration=Release\" \"--Target=Native\" \"--Runtime=${{matrix.rid}}\""
+      - name: stripping binary
+        run: strip dist/native/Release/${{matrix.rid}}/dcomp
+        if: matrix.imagetype != 'windows'
+      - name: collect native binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{matrix.rid}}
+          path: dist/native/Release/${{matrix.rid}}
+  release:
+    runs-on: "windows-latest"
+    needs: ["build"]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+      - name: restore dotnet tools
+        run: dotnet tool restore
+      - name: extract tag name
+        uses: frabert/replace-string-action@v1
+        with:
+          pattern: "refs/tags/"
+          string: ${{github.ref}}
+          replace-with: ""
+        id: extract_tag_name
+      - name: downloading nuget package
+        uses: actions/download-artifact@v4
+        with:
+          name: "nupkg-win-x64"
+          path: nupkg
+      - name: downloading win-x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: "bin-win-x64"
+          path: win-x64
+      - name: downloading osx-x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: "bin-osx-x64"
+          path: osx-x64
+      - name: downloading linux-x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: "bin-linux-x64"
+          path: linux-x64
+      - name: upload release nuget asset
+        run: Get-ChildItem -Recurse -File -Path nupkg | gh release upload "${{ GITHUB_REF }}" $_.FullName --clobber
+      - name: upload release windows exe asset
+        run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.exe | gh release upload "${{ GITHUB_REF }}" "$($_.FullName)#dcomp.win-x64.exe" --clobber
+      - name: upload release windows pdb asset
+        run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.pdb | gh release upload "${{ GITHUB_REF }}" "$($_.FullName)#dcomp.win-x64.pdb" --clobber
+      - name: upload release linux asset
+        run: Get-ChildItem -Recurse -File -Path linux-x64 -Filter dcomp | gh release upload \"${{ GITHUB_REF }}\" "$($_.FullName)#dcomp.linux-x64" --clobber
+      - name: upload release macos asset
+        run: Get-ChildItem -Recurse -File -Path osx-x64 -Filter dcomp | gh release upload \"${{ GITHUB_REF }}\" "$($_.FullName)#dcomp.osx-x64" --clobber
+      - name: upload nupkg to nugetorg
+        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *nupkg | dotnet nuget push -k \"${{secrets.NUGET_API_KEY}}\" -s https://api.nuget.org/v3/index.json $_.FullName"
