@@ -97,14 +97,14 @@ jobs:
           name: "bin-linux-x64"
           path: linux-x64
       - name: upload release nuget asset
-        run: Get-ChildItem -Recurse -File -Path nupkg | gh release upload "${{ github.ref }}" $_.FullName --clobber
+        run: Get-ChildItem -Recurse -File -Path nupkg | ForEach-Object { gh release upload "${{ github.ref }}" $_.FullName --clobber }
       - name: upload release windows exe asset
-        run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.exe | gh release upload "${{ github.ref }}" "$($_.FullName)#dcomp.win-x64.exe" --clobber
+        run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.exe | ForEach-Object { gh release upload "${{ github.ref }}" "$($_.FullName)#dcomp.win-x64.exe" --clobber }
       - name: upload release windows pdb asset
-        run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.pdb | gh release upload "${{ github.ref }}" "$($_.FullName)#dcomp.win-x64.pdb" --clobber
+        run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.pdb | ForEach-Object { gh release upload "${{ github.ref }}" "$($_.FullName)#dcomp.win-x64.pdb" --clobber }
       - name: upload release linux asset
-        run: Get-ChildItem -Recurse -File -Path linux-x64 -Filter dcomp | gh release upload \"${{ github.ref }}\" "$($_.FullName)#dcomp.linux-x64" --clobber
+        run: Get-ChildItem -Recurse -File -Path linux-x64 -Filter dcomp | ForEach-Object { gh release upload \"${{ github.ref }}\" "$($_.FullName)#dcomp.linux-x64" --clobber }
       - name: upload release macos asset
-        run: Get-ChildItem -Recurse -File -Path osx-x64 -Filter dcomp | gh release upload \"${{ github.ref }}\" "$($_.FullName)#dcomp.osx-x64" --clobber
+        run: Get-ChildItem -Recurse -File -Path osx-x64 -Filter dcomp | ForEach-Object { gh release upload \"${{ github.ref }}\" "$($_.FullName)#dcomp.osx-x64" --clobber }
       - name: upload nupkg to nugetorg
-        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *nupkg | dotnet nuget push -k \"${{secrets.NUGET_API_KEY}}\" -s https://api.nuget.org/v3/index.json $_.FullName"
+        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *nupkg | ForEach-Object { dotnet nuget push -k \"${{secrets.NUGET_API_KEY}}\" -s https://api.nuget.org/v3/index.json $_.FullName }"
