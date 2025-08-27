@@ -98,13 +98,25 @@ jobs:
           path: linux-x64
       - name: upload release nuget asset
         run: Get-ChildItem -Recurse -File -Path nupkg | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" $_.FullName --clobber }
+        env:
+          GH_TOKEN: ${{github.token}}
       - name: upload release windows exe asset
         run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.exe | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "$($_.FullName)#dcomp.win-x64.exe" --clobber }
+        env:
+          GH_TOKEN: ${{github.token}}
       - name: upload release windows pdb asset
         run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.pdb | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "$($_.FullName)#dcomp.win-x64.pdb" --clobber }
+        env:
+          GH_TOKEN: ${{github.token}}
       - name: upload release linux asset
         run: Get-ChildItem -Recurse -File -Path linux-x64 -Filter dcomp | ForEach-Object { gh release upload \"${{ steps.extract_tag_name.outputs.replaced }}\" "$($_.FullName)#dcomp.linux-x64" --clobber }
+        env:
+          GH_TOKEN: ${{github.token}}
       - name: upload release macos asset
         run: Get-ChildItem -Recurse -File -Path osx-x64 -Filter dcomp | ForEach-Object { gh release upload \"${{ steps.extract_tag_name.outputs.replaced }}\" "$($_.FullName)#dcomp.osx-x64" --clobber }
+        env:
+          GH_TOKEN: ${{github.token}}
       - name: upload nupkg to nugetorg
         run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *nupkg | ForEach-Object { dotnet nuget push -k \"${{secrets.NUGET_API_KEY}}\" -s https://api.nuget.org/v3/index.json $_.FullName }"
+        env:
+          GH_TOKEN: ${{github.token}}
