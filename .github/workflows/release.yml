@@ -109,14 +109,14 @@ jobs:
         env:
           GH_TOKEN: ${{github.token}}
       - name: upload release linux asset
-        run: Get-ChildItem -Recurse -File -Path linux-x64 -Filter dcomp | ForEach-Object { gh release upload \"${{ steps.extract_tag_name.outputs.replaced }}\" "$($_.FullName)#dcomp.linux-x64" --clobber }
+        run: Get-ChildItem -Recurse -File -Path linux-x64 -Filter dcomp | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "$($_.FullName)#dcomp.linux-x64" --clobber }
         env:
           GH_TOKEN: ${{github.token}}
       - name: upload release macos asset
-        run: Get-ChildItem -Recurse -File -Path osx-x64 -Filter dcomp | ForEach-Object { gh release upload \"${{ steps.extract_tag_name.outputs.replaced }}\" "$($_.FullName)#dcomp.osx-x64" --clobber }
+        run: Get-ChildItem -Recurse -File -Path osx-x64 -Filter dcomp | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "$($_.FullName)#dcomp.osx-x64" --clobber }
         env:
           GH_TOKEN: ${{github.token}}
       - name: upload nupkg to nugetorg
-        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *nupkg | ForEach-Object { dotnet nuget push -k \"${{secrets.NUGET_API_KEY}}\" -s https://api.nuget.org/v3/index.json $_.FullName }"
+        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *nupkg | ForEach-Object { dotnet nuget push -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json $_.FullName }"
         env:
           GH_TOKEN: ${{github.token}}
