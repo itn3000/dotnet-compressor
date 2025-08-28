@@ -108,15 +108,21 @@ jobs:
         run: Get-ChildItem -Recurse -File -Path win-x64 -Filter *.pdb | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "$($_.FullName)#dcomp.win-x64.pdb" --clobber }
         env:
           GH_TOKEN: ${{github.token}}
+      - name: copy linux binary
+        run: Copy-Item linux-x64/dcomp linux-x64/dcomp.linux-x64 -Force
+      - name: copy linux debug binary
+        run: Copy-Item linux-x64/dcomp.dbg linux-x64/dcomp.linux-x64.dbg -Force
       - name: upload release linux asset
-        run: Get-ChildItem -Recurse -File -Path linux-x64 -Filter dcomp | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "$($_.FullName)#dcomp.linux-x64" --clobber }
+        run: gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "linux-x64/dcomp.linux-x64" "linux-x64/dcomp.linux-x64.dbg" --clobber
         env:
           GH_TOKEN: ${{github.token}}
+      - name: copy mac binary
+        run: Copy-Item osx-x64/dcomp osx-x64/dcomp.osx-x64 -Force
       - name: upload release macos asset
-        run: Get-ChildItem -Recurse -File -Path osx-x64 -Filter dcomp | ForEach-Object { gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "$($_.FullName)#dcomp.osx-x64" --clobber }
+        run: gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "osx-x64/dcomp.osx-x64" --clobber
         env:
           GH_TOKEN: ${{github.token}}
       - name: upload nupkg to nugetorg
-        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *nupkg | ForEach-Object { dotnet nuget push -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json $_.FullName }"
+        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *.nupkg | ForEach-Object { dotnet nuget push -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json $_.FullName }"
         env:
           GH_TOKEN: ${{github.token}}
