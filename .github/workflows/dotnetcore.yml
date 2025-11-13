@@ -15,7 +15,7 @@ jobs:
           - os: "windows-latest"
             rid: "win-x64"
             imagetype: windows
-          - os: "macos-13"
+          - os: "macos-14"
             rid: "osx-x64"
             imagetype: mac
     env:
@@ -27,7 +27,7 @@ jobs:
       with:
         dotnet-version: |
           8.0.x
-          9.0.x
+          10.0.x
     - name: restore dotnet tool
       run: dotnet tool restore
     - name: Build with dotnet(Release)

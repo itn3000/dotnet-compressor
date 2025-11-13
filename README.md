@@ -12,8 +12,9 @@ This is the tool for compressing, archiving.
         * [GZIP](https://tools.ietf.org/html/rfc1952)
         * [BZIP2](http://www.bzip.org/)
         * [LZIP](https://www.nongnu.org/lzip/)
+        * [ZStandard](https://github.com/facebook/zstd)
         * [XZ(decompression only)](https://tukaani.org/xz/)
-* you can use as single binary executable(powered by [corert](https://github.com/dotnet/corert))
+* you can use as single binary executable(powered by [NativeAOT](https://learn.microsoft.com/en-us/dotnet/core/deploying/native-aot/?tabs=windows%2Cnet8))
     * linux-x64,macos-x64 and windows-x64 are supported
 * you can use as [dotnet global tool](https://docs.microsoft.com/en-us/dotnet/core/tools/global-tools)
 
@@ -37,7 +38,7 @@ Once you download it and add executable permission, you can execute it.
 
 if you want to use as dotnet global tool, do following steps.
 
-1. install [dotnet sdk](https://dotnet.microsoft.com/download) 5.0 or later
+1. install [dotnet sdk](https://dotnet.microsoft.com/download) 10.0
 2. run `dotnet tool install -g dotnet-compressor`
 3. ensure `$HOME/.dotnet/tools` to your PATH
 

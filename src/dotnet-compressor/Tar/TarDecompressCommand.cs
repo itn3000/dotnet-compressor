@@ -37,6 +37,8 @@ namespace dotnet_compressor.Tar
         public string ReplaceTo { get; set; }
         [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "decompress before tar extraction(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
         public string CompressionFormat { get; set; }
+        [Option("-v|--verbose", "", CommandOptionType.NoValue)]
+        public bool Verbose { get; set; }
         void ExtractFileEntry(TarInputStream tstm, string outdir, string entryKey, IConsole console, TarEntry entry)
         {
             var destfi = new FileInfo(Path.Combine(outdir, entryKey));
@@ -147,7 +149,10 @@ namespace dotnet_compressor.Tar
         void OutputTarEntryToFile(TarInputStream tstm, TarEntry entry, string entryKey, string outdir, IConsole console)
         {
             var destfi = new FileInfo(Path.Combine(outdir, entryKey));
-            console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}({entry.TarHeader.TypeFlag})");
+            if(Verbose)
+            {
+                console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}({entry.TarHeader.TypeFlag})");
+            }
             if (!destfi.Directory.Exists)
             {
                 destfi.Directory.Create();

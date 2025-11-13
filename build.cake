@@ -3,7 +3,7 @@ var Target = Argument("Target", "Default");
 var Runtime = Argument("Runtime", "");
 var VersionSuffix = Argument("VersionSuffix", "");
 var IsRelease = HasArgument("IsRelease");
-const string DefaultTargetFramework = "net8.0";
+const string DefaultTargetFramework = "net10.0";
 
 #load "nativetest.cake"
 #load "nuget.cake"

@@ -1,3 +1,5 @@
+* 3.2.0
+    * update TargetFramework to net10.0
 * 3.1.0
     * add zstd subcommand
     * update TargetFramework to net8.0
