@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: "ubuntu-24.04"
+          - os: "ubuntu-22.04"
             rid: "linux-x64"
             linker: "clang-16"
             imagetype: ubuntu
@@ -26,7 +26,6 @@ jobs:
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: |
-          8.0.x
           10.0.x
     - name: restore dotnet tool
       run: dotnet tool restore

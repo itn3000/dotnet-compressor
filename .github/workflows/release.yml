@@ -27,8 +27,6 @@ jobs:
         uses: actions/setup-dotnet@v3
         with:
           dotnet-version: |
-            8.0.x
-            9.0.x
             10.0.x
       - name: restore dotnet tool
         run: dotnet tool restore
@@ -60,20 +58,26 @@ jobs:
   release-win:
     runs-on: "ubuntu-latest"
     needs: ["build"]
+    strategy:
+      matrix:
+        include:
+          - rid: win-x64
     steps:
       - uses: actions/checkout@v1
       - name: downloading nuget package
         uses: actions/download-artifact@v4
         with:
-          name: "nupkg-win-x64"
+          name: "nupkg-${{ matrix.rid }}"
           path: nupkg
-      - name: downloading win-x64 binary
+      - name: downloading ${{matrix.rid}} binary
         uses: actions/download-artifact@v4
         with:
-          name: "bin-win-x64"
-          path: win-x64
+          name: "bin-${{matrix.rid}}"
+          path: ${{matrix.rid}}
+      - name: rename windows binary
+        run: mv ${{matrix.rid}}/dcomp.exe ${{matrix.rid}}/dcomp-${{matrix.rid}}.exe
       - name: upload release windows exe asset
-        run: find win-x64 -name '*.exe' -exec gh release upload "${{ github.event.release.tag_name }}" '{}' --clobber ';'
+        run: find ${{matrix.rid}} -name '*.exe' -exec gh release upload "${{ github.event.release.tag_name }}" '{}' --clobber ';'
         env:
           GH_TOKEN: ${{github.token}}
       - name: upload release windows pdb asset
@@ -89,48 +93,51 @@ jobs:
   release-linux:
     runs-on: "ubuntu-latest"
     needs: ["build"]
+    strategy:
+      matrix:
+        include:
+          - rid: linux-x64
     steps:
       - uses: actions/checkout@v1
-      - name: downloading linux-x64 binary
+      - name: downloading ${{matrix.rid}} binary
         uses: actions/download-artifact@v4
         with:
-          name: "bin-linux-x64"
-          path: linux-x64
-  release:
+          name: "bin-${{matrix.rid}}"
+          path: ${{matrix.rid}}
+      - name: rename binary
+        run: mv ${{matrix.rid}}/dcomp ${{matrix.rid}}/dcomp-${{matrix.rid}}
+      - name: upload binary asset
+        run: find ${{matrix.rid}} -name 'dcomp-${{matrix.rid}}' -exec gh release upload "${{ github.event.release.tag_name }}" '{}' --clobber ';'
+        env:
+          GH_TOKEN: ${{github.token}}
+      - name: upload debug asset
+        run: find ${{matrix.rid}} -name 'dcomp.dbg' -exec gh release upload "${{ github.event.release.tag_name }}" '{}' --clobber ';'
+        env:
+          GH_TOKEN: ${{github.token}}
+  release-osx:
     runs-on: "ubuntu-latest"
     needs: ["build"]
+    strategy:
+      matrix:
+        include:
+          - rid: osx-x64
     steps:
       - uses: actions/checkout@v1
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: |
-            8.0.x
-            9.0.x
-            10.0.x
-      - name: restore dotnet tools
-        run: dotnet tool restore
-      - name: downloading osx-x64 binary
+      - name: downloading ${{matrix.rid}} binary
         uses: actions/download-artifact@v4
         with:
-          name: "bin-osx-x64"
-          path: osx-x64
-
-      - name: copy linux binary
-        run: Copy-Item linux-x64/dcomp linux-x64/dcomp.linux-x64 -Force
-      - name: copy linux debug binary
-        run: Copy-Item linux-x64/dcomp.dbg linux-x64/dcomp.linux-x64.dbg -Force
-      - name: upload release linux asset
-        run: gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "linux-x64/dcomp.linux-x64" "linux-x64/dcomp.linux-x64.dbg" --clobber
+          name: "bin-${{matrix.rid}}"
+          path: ${{matrix.rid}}
+      - name: rename binary
+        run: mv ${{matrix.rid}}/dcomp ${{matrix.rid}}/dcomp-${{matrix.rid}}
+      - name: compress debug information files
+        run: tar cfz dcomp.dSYM.tgz dcomp.dSYM
+        working-directory: ${{matrix.rid}}
+      - name: upload binary asset
+        run: find ${{matrix.rid}} -name 'dcomp-${{matrix.rid}}' -maxdepth 1 -exec gh release upload "${{ github.event.release.tag_name }}" '{}' --clobber ';'
         env:
           GH_TOKEN: ${{github.token}}
-      - name: copy mac binary
-        run: Copy-Item osx-x64/dcomp osx-x64/dcomp.osx-x64 -Force
-      - name: upload release macos asset
-        run: gh release upload "${{ steps.extract_tag_name.outputs.replaced }}" "osx-x64/dcomp.osx-x64" --clobber
-        env:
-          GH_TOKEN: ${{github.token}}
-      - name: upload nupkg to nugetorg
-        run: "Get-ChildItem -Recurse -File -Path nupkg -Filter *.nupkg | ForEach-Object { dotnet nuget push -k ${{secrets.NUGET_API_KEY}} -s https://api.nuget.org/v3/index.json $_.FullName }"
+      - name: upload debug asset
+        run: find ${{matrix.rid}} -name 'dcomp.dSYM.tgz' -maxdepth 1 -exec gh release upload "${{ github.event.release.tag_name }}" '{}' --clobber ';'
         env:
           GH_TOKEN: ${{github.token}}
