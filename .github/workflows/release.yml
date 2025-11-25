@@ -138,6 +138,6 @@ jobs:
         env:
           GH_TOKEN: ${{github.token}}
       - name: upload debug asset
-        run: find ${{matrix.rid}} -name 'dcomp.dSYM.tgz' -maxdepth 1 -exec gh release upload "${{ github.event.release.tag_name }}" '{}' --clobber ';'
+        run: gh release upload "${{ github.event.release.tag_name }}" ${{matrix.rid}}/dcomp.dSYM.tgz --clobber
         env:
           GH_TOKEN: ${{github.token}}

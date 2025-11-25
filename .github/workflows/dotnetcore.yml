@@ -10,7 +10,7 @@ jobs:
         include:
           - os: "ubuntu-22.04"
             rid: "linux-x64"
-            linker: "clang-16"
+            linker: "clang-13"
             imagetype: ubuntu
           - os: "windows-latest"
             rid: "win-x64"
