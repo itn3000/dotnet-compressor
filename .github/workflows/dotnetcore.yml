@@ -61,3 +61,29 @@ jobs:
       with:
         name: bin-${{matrix.rid}}
         path: dist/native/Release/${{matrix.rid}}
+  list-artifacts:
+    runs-on: ubuntu-latest
+    needs: ["build"]
+    steps:
+      - name: downloading nuget package
+        uses: actions/download-artifact@v4
+        with:
+          name: "nupkg-win-x64"
+          path: nupkg
+      - name: downloading win-x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: "bin-win-x64"
+          path: win-x64
+      - name: downloading linux-x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: "bin-linux-x64"
+          path: linux-x64
+      - name: downloading osx-x64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: "bin-osx-x64"
+          path: osx-x64
+      - name: list binaries
+        run: find .
