@@ -16,6 +16,9 @@
     <PackageReference Include="SharpCompress" Version="0.41.0" />
     <PackageReference Include="ZstdSharp.Port" Version="0.8.6" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath=""/>
+  </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -25,12 +28,13 @@
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageId>dotnet-compressor</PackageId>
-    <VersionPrefix>3.2.0</VersionPrefix>
+    <VersionPrefix>4.0.0</VersionPrefix>
     <PackageDescription>dotnet compression/decompression tool</PackageDescription>
     <PackageProjectUrl>https://github.com/itn3000/dotnet-compressor</PackageProjectUrl>
     <PackageRepositoryUrl>https://github.com/itn3000/dotnet-compressor</PackageRepositoryUrl>
     <PackageTags>dotnet tool compress zip tar gzip bzip2 lzip</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <Authors>Itn3000</Authors>
     <Copyright>Copyright (C) 2019 Itn3000</Copyright>
     <Nullable>enable</Nullable>

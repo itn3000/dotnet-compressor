@@ -129,7 +129,9 @@ you can manupilate ZIP by `zip` subcommand.
 ## GZIP+TAR
 
 * archiving files under `dir1` and compressing by gzip: `dcomp tar c -b dir1 | dcomp gz c -o dir1.tgz`
+    * or `dcomp tar c -b dir1 -c gzip -o dir1.tgz`
 * extracting from `dir1.tgz` into `dir1`: `dcomp gz d -i dir1.tgz|dcomp tar d -o dir1`
+    * or `dcomp tar d -i dir1.tgz -c gzip`
 
 ## ZStandard
 
@@ -142,14 +144,12 @@ you can manupilate ZIP by `zip` subcommand.
 
 ## Prerequisits
 
-* dotnet-sdk 5.0
-* mono(if linux or mac)
-* .NET Framework 4.6.1 or later(if windows)
+* dotnet-sdk 10.0
 
 here are prerequisits if you want to build native binary
 
 * windows
-    * Build tools for Visual Studio 2019(if windows)
+    * Build tools for Visual Studio 2022(if windows)
 * ubuntu
     * build-essential
     * libkrb5-dev
@@ -161,10 +161,10 @@ here are prerequisits if you want to build native binary
 ## Build 
 
 1. run `dotnet tool restore`
-2. run `dotnet tool run dotnet-cake`
-    * if you want to build release binary, run `dotnet tool run dotnet-cake -Configuration=Release -IsRelease`
+2. run `dotnet cake`
+    * if you want to build release binary, run `dotnet cake -Configuration=Release -IsRelease`
 
-and then you will get nupkg in `dist/[Configuration]/nupkg`, binary executable in `bin/Release/netcoreapp3.1`
+and then you will get nupkg in `dist/[Configuration]/nupkg`, binary executable in `src/dotnet-compressor/bin/[Debug or Release]/net10.0`
 
 ## Build native binary
 
@@ -172,16 +172,8 @@ if you want to get single executable binary,
 you should do following steps.
 
 1. set `CppCompilerAndLinker=clang-[version]` env value if you do not have clang-3.9 and build in linux or macos.
-2. run `dotnet tool run dotnet-cake -Target=Native -Runtime=[rid] -Configuration=[Debug or Release]`
+2. run `dotnet cake -Target=Native -Runtime=[rid] -Configuration=[Debug or Release]`
 
 [about rid, refer to this page](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog)
 
-and then you will get native executable binary in `dist/[Configuration]/bin`
-
-## Generating sln
-
-sln is not existed in repo.if you want to solution file(*.sln), you should do following steps.
-
-1. run `dotnet tool run dotnet-cake -Target=SlnGen`
-
-and then you will get `dotnet-compressor.sln` file in top of the repo.
+and then you will get native executable binary in `dist/native/[Debug or Release]/[rid]`
