@@ -1,12 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
-using McMaster.Extensions.CommandLineUtils;
 using System;
 using System.IO;
 using System.Text;
 
 namespace DotNet.Compressor.Test
 {
-    class DummyConsole : IConsole
+    class DummyConsole : dotnet_compressor.IConsole
     {
         StringBuilder _Buffer = new StringBuilder();
         StringBuilder _ErrorBuffer = new StringBuilder();
@@ -53,6 +52,11 @@ namespace DotNet.Compressor.Test
 
         public void ResetColor()
         {
+        }
+
+        public void WriteLine(string str)
+        {
+            _Buffer.Append(str);
         }
     }
 }

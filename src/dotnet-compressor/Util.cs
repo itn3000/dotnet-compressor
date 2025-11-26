@@ -12,7 +12,7 @@ namespace dotnet_compressor
     static class Util
     {
         public static bool IsPosix => !OperatingSystem.IsWindows();
-        public static Encoding GetEncodingFromName(string name, Encoding defaultEncoding = null)
+        public static Encoding GetEncodingFromName(string? name, Encoding? defaultEncoding = null)
         {
             if (defaultEncoding == null)
             {
@@ -34,7 +34,7 @@ namespace dotnet_compressor
                 }
             }
         }
-        public static Stream OpenOutputStream(string filePath, bool createNew)
+        public static Stream OpenOutputStream(string? filePath, bool createNew)
         {
             if (string.IsNullOrEmpty(filePath))
             {
@@ -52,7 +52,7 @@ namespace dotnet_compressor
                 }
             }
         }
-        public static Stream OpenInputStream(string filePath)
+        public static Stream OpenInputStream(string? filePath)
         {
             if (string.IsNullOrEmpty(filePath))
             {
@@ -63,7 +63,7 @@ namespace dotnet_compressor
                 return File.OpenRead(filePath);
             }
         }
-        public static IEnumerable<(string Path, string Stem)> GetFileList(string basedir, string[] includes, string[] excludes, bool ignoreCase)
+        public static IEnumerable<(string Path, string Stem)> GetFileList(string basedir, string[]? includes, string[]? excludes, bool ignoreCase)
         {
             var matcher = new Microsoft.Extensions.FileSystemGlobbing.Matcher(ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
             if (excludes != null)
@@ -96,7 +96,7 @@ namespace dotnet_compressor
                 return result.Files.Select(x => (x.Path, x.Stem));
             }
         }
-        public static string GetPasswordString(string password, string passEnvironmentName)
+        public static string? GetPasswordString(string? password, string? passEnvironmentName)
         {
             if (!string.IsNullOrEmpty(password) && !string.IsNullOrEmpty(passEnvironmentName))
             {
@@ -115,7 +115,7 @@ namespace dotnet_compressor
                 return null;
             }
         }
-        public static string ReplaceRegexString(string input, string pattern, string replaceto)
+        public static string ReplaceRegexString(string input, string? pattern, string? replaceto)
         {
             if(string.IsNullOrEmpty(pattern) || string.IsNullOrEmpty(replaceto))
             {

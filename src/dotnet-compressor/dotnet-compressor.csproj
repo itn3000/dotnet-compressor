@@ -5,7 +5,10 @@
   </ItemGroup> -->
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandlineUtils" Version="4.1.1" />
+    <PackageReference Include="ConsoleAppFramework" Version="5.7.13">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
@@ -30,6 +33,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Authors>Itn3000</Authors>
     <Copyright>Copyright (C) 2019 Itn3000</Copyright>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(WithCoreRT)' != 'true'">
     <PackAsTool>true</PackAsTool>
@@ -37,8 +41,5 @@
   <PropertyGroup Condition="'$(WithCoreRT)' == 'true'">
     <PublishAot>true</PublishAot>
   </PropertyGroup>
-  <ItemGroup Condition="'$(WithCoreRT)' == 'true'">
-    <RdXmlFile Include="rd.xml" />
-  </ItemGroup>
 
 </Project>

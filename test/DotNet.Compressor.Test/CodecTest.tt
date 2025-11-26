@@ -6,6 +6,7 @@ using System.Text;
 using System.IO;
 using dotnet_compressor;
 using Xunit;
+using System.Threading.Tasks;
 
 namespace DotNet.Compressor.Test
 {
@@ -15,25 +16,25 @@ namespace DotNet.Compressor.Test
     public class TestCodec<#=module#>
     {
         [Fact]
-        public void Codec()
+        public async Task Codec()
         {
             var testName = nameof(TestCodec<#=module#>) + nameof(Codec) + "<#=module#>";
             var (tmpDir, sampleDir) = Util.CreateTestDir(testName);
             try
             {
-                var comp = new <#=module#>CompressCommand();
-                comp.InputFile = Path.Combine(sampleDir, "abc.txt");
-                comp.OutputFile = Path.Combine(tmpDir, "comp.bin");
-                comp.OnExecute(new DummyConsole());
-                Assert.True(File.Exists(comp.OutputFile));
-                var decomp = new <#=module#>DecompressCommand();
-                decomp.InputFile = comp.OutputFile;
-                decomp.OutputFile = Path.Combine(tmpDir, "decomp.bin");
-                decomp.OnExecute(new DummyConsole());
-                Assert.True(File.Exists(decomp.OutputFile));
-                var originalBytes = File.ReadAllBytes(comp.InputFile);
-                var compBytes = File.ReadAllBytes(comp.OutputFile);
-                var decBytes = File.ReadAllBytes(decomp.OutputFile);
+                var comp = new <#=module#>Command();
+                var compressInput = Path.Combine(sampleDir, "abc.txt");
+                var compressOutput = Path.Combine(tmpDir, "comp.bin");
+                await comp.Compress(input: compressInput, output: compressOutput, token: default);
+                Assert.True(File.Exists(compressOutput));
+                var decomp = new <#=module#>Command();
+                var decompressionInput = compressOutput;
+                var decompressionOutput = Path.Combine(tmpDir, "decomp.bin");
+                await decomp.Decompress(input: decompressionInput, output: decompressionOutput, token: default);
+                Assert.True(File.Exists(decompressionOutput));
+                var originalBytes = File.ReadAllBytes(compressInput);
+                var compBytes = File.ReadAllBytes(compressOutput);
+                var decBytes = File.ReadAllBytes(decompressionOutput);
                 Assert.Equal(originalBytes, decBytes);
                 Assert.NotEqual(decBytes, compBytes);
             }

@@ -1,46 +1,30 @@
 using System;
-using McMaster.Extensions.CommandLineUtils;
-using McMaster.Extensions.CommandLineUtils.Abstractions;
+using System.Threading;
+using System.Threading.Tasks;
+using ConsoleAppFramework;
 using SharpCompress.Compressors.Xz;
 
 namespace dotnet_compressor
 {
-    [Command("xz", Description = "manupilating xz data(decompressing only)")]
-    [Subcommand(typeof(XzDecompressCommand))]
-    [HelpOption]
     class XzCommand
     {
-        public int OnExecute(CommandLineApplication<XzCommand> application, IConsole console)
+        /// <summary>
+        /// decompressing data as xz format
+        /// </summary>
+        /// <param name="input">input file path(default: standard input)</param>
+        /// <param name="output">output file path(default: standard output)</param>
+        /// <param name="token"></param>
+        /// <returns>0 if success, other if error</returns>
+        [Command("xz decompress|xz d")]
+        public async Task<int> Decompress(string? input = null, string? output = null, CancellationToken token = default)
         {
-            console.Error.WriteLine(application.GetHelpText());
-            return 0;
-        }
-    }
-    [Command("d", "xzdecompress", Description = "decompressing data as xz format")]
-    [HelpOption]
-    class XzDecompressCommand
-    {
-        [Option("-i|--input=<INPUT_FILE>", "input file path(default: standard input)", CommandOptionType.SingleValue)]
-        public string InputFile { get; set; }
-        [Option("-o|--output=<OUTPUT_FILE_PATH>", "output file path(default: standard output)", CommandOptionType.SingleValue)]
-        public string OutputFile { get; set; }
-        public int OnExecute(IConsole console)
-        {
-            try
+            using (var istm = Util.OpenInputStream(input))
+            using (var ostm = Util.OpenOutputStream(output, true))
             {
-                using(var istm = Util.OpenInputStream(InputFile))
-                using(var ostm = Util.OpenOutputStream(OutputFile, true))
+                using (var izstm = new XZStream(istm))
                 {
-                    using(var izstm = new XZStream(istm))
-                    {
-                        izstm.CopyTo(ostm);
-                    }
+                    await izstm.CopyToAsync(ostm, token);
                 }
-            }
-            catch (Exception e)
-            {
-                console.Error.WriteLine($"failed xz decompression:{e}");
-                return 1;
             }
             return 0;
         }
