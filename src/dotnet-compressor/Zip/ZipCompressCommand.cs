@@ -1,4 +1,3 @@
-using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Text;
@@ -13,55 +12,28 @@ using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
 using System.IO.Compression;
 using Microsoft.Extensions.FileSystemGlobbing;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace dotnet_compressor.Zip
 {
-    [Command("c", "compress", "zipcompress", Description = "compress zip archive")]
-    [HelpOption]
     class ZipCompressCommand
     {
-        [Option("-b|--base <BASEPATH>", "input base path", CommandOptionType.SingleValue)]
-        public string BasePath { get; set; }
-        [Option("-o|--output <OUTPUT_ZIP>", "output zip path(default: stdout)", CommandOptionType.SingleValue)]
-        public string OutputPath { get; set; }
-        [Option("-i|--include <INCLUDE_PATTERN>", "file include pattern(default: all files and directories)", CommandOptionType.MultipleValue)]
-        public string[] Includes { get; set; }
-        [Option("-x|--exclude <EXCLUDE_PATTERN>", "file exclude pattern(default: none)", CommandOptionType.MultipleValue)]
-        public string[] Excludes { get; set; }
-        [Option("-p|--password <PASSWORD>", "encryption password, cannot use with --passenv option(default: none)", CommandOptionType.SingleValue)]
-        public string Password { get; set; }
-        [Option("--passenv <ENVIRONMENT_NAME>", "encryption password environment name, cannot use with --pass option(default: none)", CommandOptionType.SingleValue)]
-        public string PassEnvironmentName { get; set; }
-        [Option("-e|--encoding <ENCODING_NAME>", "filename encoding in archive(default: system default)", CommandOptionType.SingleValue)]
-        public string FileNameEncoding { get; set; }
-        [Option("-E|--encryption", "flag for encryption, you must specify passenv option too(default: false)", CommandOptionType.NoValue)]
-        public bool Encryption { get; set; }
-        [Option("--case-sensitive", "flag for case sensitivity on includes and excludes option(default: false)", CommandOptionType.NoValue)]
-        public bool CaseSensitive { get; set; }
-        [Option("--level=<COMPRESSION_LEVEL>", "compression level(between 0 and 9)", CommandOptionType.SingleValue)]
-        public string CompressionLevelString { get; set; }
-        int CompressionLevel => !string.IsNullOrEmpty(CompressionLevelString) ? int.Parse(CompressionLevelString) : -1;
-        [Option("--replace-from=<REGEXP>", "replace filename source regexp", CommandOptionType.SingleValue)]
-        public string ReplaceFrom { get; set; }
-        [Option("--replace-to=<REPLACE_TO>", "replace filename dest regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
-        public string ReplaceTo { get; set; }
-        [Option("-r|--retry", "retry count(default: 5)", CommandOptionType.SingleValue)]
-        public string RetryNumString { get; set; }
-        [Option("--stop-on-error", "stop compression on error in adding file entry(default: false)", CommandOptionType.NoValue)]
+        public string? BasePath { get; set; }
+        public string? OutputPath { get; set; }
+        public string[]? Includes { get; set; }
+        public string[]? Excludes { get; set; }
+        public string? Password { get; set; }
+        public string? PassEnvironmentName { get; set; }
+        public string? FileNameEncoding { get; set; }
+        public bool Encryption { get; set; } = false;
+        public bool CaseSensitive { get; set; } = false;
+        public int CompressionLevel { get; set; } = -1;
+        public string? ReplaceFrom { get; set; }
+        public string? ReplaceTo { get; set; }
+        public int RetryNum { get; set; } = 5;
         public bool StopOnError { get; set; } = false;
-        [Option("--verbose", "verbose output(default: false)", CommandOptionType.NoValue)]
-        public bool Verbose { get; set; }
-        uint GetRetryNum()
-        {
-            if (!string.IsNullOrEmpty(RetryNumString) && uint.TryParse(RetryNumString, out var retryNum))
-            {
-                return retryNum;
-            }
-            else
-            {
-                return 5;
-            }
-        }
+        public bool Verbose { get; set; } = false;
         void AddFileEntry(ZipOutputStream zstm, string stem, string path, IConsole console, FileInfo fi, bool isUtf8)
         {
             var entryName = ZipEntry.CleanName(Util.ReplaceRegexString(stem, ReplaceFrom, ReplaceTo));
@@ -88,7 +60,7 @@ namespace dotnet_compressor.Zip
             }
             zstm.CloseEntry();
         }
-        public int OnExecute(IConsole console)
+        public async Task<int> OnExecute(IConsole console, CancellationToken token)
         {
             try
             {
@@ -112,8 +84,8 @@ namespace dotnet_compressor.Zip
 
                     foreach (var (path, stem) in Util.GetFileList(basePath, Includes, Excludes, !CaseSensitive))
                     {
-                        Exception exception = null;
-                        var RetryNum = GetRetryNum();
+                        token.ThrowIfCancellationRequested();
+                        Exception? exception = null;
                         for (int i = 0; i < RetryNum; i++)
                         {
                             try
@@ -160,7 +132,7 @@ namespace dotnet_compressor.Zip
                 return 1;
             }
         }
-        string GetPasswordString()
+        string? GetPasswordString()
         {
             if (!string.IsNullOrEmpty(Password) && !string.IsNullOrEmpty(PassEnvironmentName))
             {

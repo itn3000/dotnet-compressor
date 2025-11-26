@@ -1,4 +1,3 @@
-using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Text;
@@ -13,34 +12,23 @@ using ICSharpCode.SharpZipLib.Zip;
 using ICSharpCode.SharpZipLib.Core;
 using System.IO.Compression;
 using Microsoft.Extensions.FileSystemGlobbing;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace dotnet_compressor.Zip
 {
-    [Command("d", "decompress", "zipdecompress", Description = "decompress zip archive")]
-    [HelpOption]
     class ZipDecompressCommand
     {
-        [Option("-i|--input=<INPUT_FILE_PATH>", "input file path(default: stdin)", CommandOptionType.SingleValue)]
-        public string InputPath { get; set; }
-        [Option("-o|--output=<OUTPUT_DIRECTORY>", "output directory path(default: current directory)", CommandOptionType.SingleValue)]
-        public string OutputDirectory { get; set; }
-        [Option("--include=<INCLUDE_PATTERN>", "extracting file include pattern(default: **/*)", CommandOptionType.MultipleValue)]
-        public string[] Includes { get; set; }
-        [Option("--exclude=<EXCLUDE_FILE_PATTERN>", "extracting file exclude pattern(default: none)", CommandOptionType.MultipleValue)]
-        public string[] Excludes { get; set; }
-        [Option("-p|--password <PASSWORD>", "encryption password, cannot use with --passenv option(default: none)", CommandOptionType.SingleValue)]
-        public string Password { get; set; }
-        [Option("--passenv <ENVIRONMENT_NAME>", "encryption password environment name, cannot use with --pass option(default: none)", CommandOptionType.SingleValue)]
-        public string PassEnvironmentName { get; set; }
-        [Option("-e|--encoding=<FILENAME_ENCODING>", "filename encoding in archive(default: utf-8)", CommandOptionType.SingleValue)]
-        public string FileNameEncoding { get; set; }
-        [Option("-l|--list", "output file list only then exit", CommandOptionType.NoValue)]
+        public string? InputPath { get; set; }
+        public string? OutputDirectory { get; set; }
+        public string[]? Includes { get; set; }
+        public string[]? Excludes { get; set; }
+        public string? Password { get; set; }
+        public string? PassEnvironmentName { get; set; }
+        public string? FileNameEncoding { get; set; } = null;
         public bool ListOnly { get; set; }
-        [Option("--replace-from=<REGEXP>", "replace filename regexp pattern", CommandOptionType.SingleValue)]
-        public string ReplaceFrom { get; set; } = "";
-        [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
-        public string ReplaceTo { get; set; } = "";
-        [Option("--verbose", "verbose output(default: false)", CommandOptionType.NoValue)]
+        public string? ReplaceFrom { get; set; }
+        public string? ReplaceTo { get; set; }
         public bool Verbose { get; set; }
         Matcher GetMatcher()
         {
@@ -64,7 +52,7 @@ namespace dotnet_compressor.Zip
             var entryName = !string.IsNullOrEmpty(ReplaceFrom) && !string.IsNullOrEmpty(ReplaceTo) ?
                 Regex.Replace(entry.Name, ReplaceFrom, ReplaceTo) : entry.Name;
             var fi = new FileInfo(Path.Combine(outdir, entryName));
-            if (!fi.Directory.Exists)
+            if (fi.Directory != null && !fi.Directory.Exists)
             {
                 fi.Directory.Create();
             }
@@ -107,8 +95,9 @@ namespace dotnet_compressor.Zip
                 }
             }
         }
-        public void OnExecute(IConsole console)
+        public async Task<int> OnExecute(IConsole console, CancellationToken token)
         {
+            await Task.Yield();
             var outdir = !string.IsNullOrEmpty(OutputDirectory) ? OutputDirectory : Directory.GetCurrentDirectory();
             var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
             var matcher = GetMatcher();
@@ -143,6 +132,7 @@ namespace dotnet_compressor.Zip
                     }
                 }
             }
+            return 0;
         }
     }
 }

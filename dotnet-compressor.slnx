@@ -2,6 +2,12 @@
   <Configurations>
     <Platform Name="AnyCPU" />
   </Configurations>
+  <Folder Name="/cake/">
+    <File Path="build.cake" />
+    <File Path="nativetest.cake" />
+    <File Path="nuget.cake" />
+    <File Path="t4.cake" />
+  </Folder>
   <Project Path="src/dotnet-compressor/dotnet-compressor.csproj">
     <BuildType Project="Debug" />
   </Project>
