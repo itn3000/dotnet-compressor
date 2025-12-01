@@ -4,47 +4,34 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
-using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.BZip2;
 using SharpCompress.Compressors.LZMA;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace dotnet_compressor.Tar
 {
-    [Command("c", "compress", "tarcompress", Description = "creating tar archive")]
-    [HelpOption]
     class TarCompressCommand
     {
-        [Option("-b|--base-directory=<BASE_DIRECTORY>", "extract base directory(if not specified, using current directory)", CommandOptionType.SingleValue)]
-        public string BaseDirectory { get; set; }
-        [Option("-o|--output=<OUTPUT_FILE_PATH>", "output file path(if not specified, using stdout)", CommandOptionType.SingleValue)]
-        public string OutputPath { get; set; }
-        [Option("-i|--include=<INCLUDE_PATTERN>", "include file patterns(default: \"**/*\")", CommandOptionType.MultipleValue)]
-        public string[] Includes { get; set; }
-        [Option("-x|--exclude=<EXCLUDE_PATTERN>", "exclude file patterns(default: none", CommandOptionType.MultipleValue)]
-        public string[] Excludes { get; set; }
-        [Option("-e|--encoding=<ENCODING_NAME>", "file encoding name(default: utf-8)", CommandOptionType.SingleValue)]
-        public string FileNameEncoding { get; set; }
-        [Option("--replace-from=<REGEXP>", "replace filename regexp pattern", CommandOptionType.SingleValue)]
-        public string ReplaceFrom { get; set; }
-        [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
-        public string ReplaceTo { get; set; }
-        [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "compress after tar archiving(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
-        public string CompressionFormat { get; set; }
-        [Option("-pm|--permission-map=<MAP_ELEMENT>", "entry permission mapping(format is '[regex]=[permission number(octal)]:[uid(in decimal, optional)]:[gid(in decimal, optional)]', default: 644(file),755(directory)", CommandOptionType.MultipleValue)]
-        public string[] PermissionStrings { get; set; }
-        [Option("-pf|--permission-file=<MAP_FILE>", "entry permission mapping(format is same as '--permission-map' option, one mapping per line)", CommandOptionType.SingleValue)]
-        public string PermissionMapFile { get; set; }
+        public string? BaseDirectory { get; set; }
+        public string? OutputPath { get; set; }
+        public string[]? Includes { get; set; }
+        public string[]? Excludes { get; set; }
+        public string? FileNameEncoding { get; set; }
+        public string? ReplaceFrom { get; set; }
+        public string? ReplaceTo { get; set; }
+        public string? CompressionFormat { get; set; }
+        public string[]? PermissionStrings { get; set; }
+        public string? PermissionMapFile { get; set; }
         List<PermissionMapElement> _PermissionMap = new List<PermissionMapElement>();
-        [Option("-r|--retry", "retry count(default: 5)", CommandOptionType.SingleValue)]
-        public string RetryNumString { get; set; }
-        [Option("--stop-on-error", "stop on compression error in adding file entry(default: false)", CommandOptionType.NoValue)]
+        public int RetryNum { get; set; } = 5;
         public bool StopOnError { get; set; } = false;
-        [Option("--verbose", "verbose output(default: false)", CommandOptionType.NoValue)]
         public bool Verbose { get; set; }
+
         (int permission, int? uid, int? gid) GetUnixPermission(string entryName, int defaultValue)
         {
             foreach (var perm in _PermissionMap)
@@ -115,7 +102,14 @@ namespace dotnet_compressor.Tar
                     while (true)
                     {
                         var l = treader.ReadLine();
-                        tmpList.Add(ParsePermissionMapElement(l));
+                        if(l == null)
+                        {
+                            break;
+                        }
+                        if (l.Trim() != "")
+                        {
+                            tmpList.Add(ParsePermissionMapElement(l));
+                        }
                     }
                 }
             }
@@ -174,14 +168,7 @@ namespace dotnet_compressor.Tar
         }
         uint GetRetryNum()
         {
-            if (!string.IsNullOrEmpty(RetryNumString) && !uint.TryParse(RetryNumString, out var retryNum))
-            {
-                return retryNum;
-            }
-            else
-            {
-                return 5;
-            }
+            return (uint)RetryNum;
         }
         void AddDirectoryEntry(TarOutputStream tarOutputStream, DirectoryInfo directory, FilePatternMatch m, IConsole console)
         {
@@ -220,7 +207,7 @@ namespace dotnet_compressor.Tar
                 console.Error.WriteLine($"'{directory.FullName}' -> '{targetPath}'({Convert.ToString(permission, 8)})");
             }
         }
-        public int OnExecute(IConsole con)
+        public async Task<int> OnExecute(IConsole con, CancellationToken token)
         {
             try
             {
@@ -255,7 +242,7 @@ namespace dotnet_compressor.Tar
                         }
                         else
                         {
-                            Exception exception = null;
+                            Exception? exception = null;
                             for (int i = 0; i < RetryNum; i++)
                             {
                                 exception = null;
@@ -289,7 +276,6 @@ namespace dotnet_compressor.Tar
                                 }
                                 else
                                 {
-                                    con.Error.WriteLine("break");
                                     break;
                                 }
                             }

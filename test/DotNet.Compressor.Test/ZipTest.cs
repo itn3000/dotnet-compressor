@@ -1,6 +1,7 @@
 using System;
 using Xunit;
 using System.IO;
+using System.Threading.Tasks;
 
 
 namespace DotNet.Compressor.Test
@@ -15,7 +16,7 @@ namespace DotNet.Compressor.Test
         [InlineData("sjis")]
         [InlineData("utf-8")]
         [InlineData("65001")]
-        public void EncodingTest(string encodingName)
+        public async Task EncodingTest(string encodingName)
         {
             var testName = nameof(ZipTest) + "Regex" + nameof(EncodingTest) + encodingName;
             var (tmpDir, sampleDir) = Util.CreateTestDir(testName);
@@ -26,13 +27,13 @@ namespace DotNet.Compressor.Test
                 cmd.Encryption = false;
                 cmd.FileNameEncoding = encodingName;
                 cmd.OutputPath = Path.Combine(tmpDir, "test.zip");
-                cmd.OnExecute(new DummyConsole());
+                await cmd.OnExecute(new DummyConsole(), default);
                 Assert.True(File.Exists(cmd.OutputPath));
                 var decomp = new dotnet_compressor.Zip.ZipDecompressCommand();
                 decomp.InputPath = cmd.OutputPath;
                 decomp.OutputDirectory = Path.Combine(tmpDir, "decomp");
                 decomp.FileNameEncoding = encodingName;
-                decomp.OnExecute(new DummyConsole());
+                await decomp.OnExecute(new DummyConsole(), default);
                 Assert.True(File.Exists(Path.Combine(decomp.OutputDirectory, "abc.txt")));
                 Assert.True(File.Exists(Path.Combine(decomp.OutputDirectory, Util.JapaneseFileName)));
             }
@@ -42,7 +43,7 @@ namespace DotNet.Compressor.Test
             }
         }
         [Fact]
-        public void RegexCompressionTest()
+        public async Task RegexCompressionTest()
         {
             try
             {
@@ -53,12 +54,12 @@ namespace DotNet.Compressor.Test
                 cmd.ReplaceFrom = "\\.txt$";
                 cmd.ReplaceTo = ".md";
                 cmd.OutputPath = Path.Combine(tmpDir, "test.zip");
-                cmd.OnExecute(new DummyConsole());
+                await cmd.OnExecute(new DummyConsole(), default);
                 Assert.True(File.Exists(cmd.OutputPath));
                 var decomp = new dotnet_compressor.Zip.ZipDecompressCommand();
                 decomp.InputPath = cmd.OutputPath;
                 decomp.OutputDirectory = Path.Combine(tmpDir, "decomp");
-                decomp.OnExecute(new DummyConsole());
+                await decomp.OnExecute(new DummyConsole(), default);
                 Assert.True(File.Exists(Path.Combine(decomp.OutputDirectory, "abc.md")));
             }
             finally
@@ -67,7 +68,7 @@ namespace DotNet.Compressor.Test
             }
         }
         [Fact]
-        public void RegexDecompressionTest()
+        public async Task RegexDecompressionTest()
         {
             try
             {
@@ -76,14 +77,16 @@ namespace DotNet.Compressor.Test
                 cmd.BasePath = sampleDir;
                 cmd.Encryption = false;
                 cmd.OutputPath = Path.Combine(tmpDir, "test.zip");
-                cmd.OnExecute(new DummyConsole());
+                cmd.Verbose = true;
+                await cmd.OnExecute(new DummyConsole(), default);
                 Assert.True(File.Exists(cmd.OutputPath));
                 var decomp = new dotnet_compressor.Zip.ZipDecompressCommand();
                 decomp.InputPath = cmd.OutputPath;
                 decomp.OutputDirectory = Path.Combine(tmpDir, "decomp");
                 decomp.ReplaceFrom = "\\.txt$";
                 decomp.ReplaceTo = ".md";
-                decomp.OnExecute(new DummyConsole());
+                decomp.Verbose = true;
+                await decomp.OnExecute(new DummyConsole(), default);
                 Assert.True(File.Exists(Path.Combine(decomp.OutputDirectory, "abc.md")));
             }
             finally

@@ -1,85 +1,58 @@
 using System;
-using McMaster.Extensions.CommandLineUtils;
-using McMaster.Extensions.CommandLineUtils.Abstractions;
 using System.IO.Compression;
 using ICSharpCode.SharpZipLib.GZip;
+using System.Threading.Tasks;
+using System.Threading;
+using ConsoleAppFramework;
 
 namespace dotnet_compressor
 {
-    [Command("gz", "gzip", Description = "manupilating gzip data")]
-    [Subcommand(typeof(GZipCompressCommand), typeof(GZipDecompressCommand))]
-    [HelpOption]
     class GZipCommand
     {
-        public int OnExecute(CommandLineApplication<GZipCommand> application, IConsole console)
+        /// <summary>
+        /// compressing data as gzip format
+        /// </summary>
+        /// <param name="input">-i, input file path(default: standard input)</param>
+        /// <param name="output">-o, output file path(default: standard output)</param>
+        /// <param name="level">-l, compression level(from 0 to 9, higher is more reducible)</param>
+        /// <param name="token"></param>
+        /// <returns>0 if success, other if error</returns>
+        [Command("gzip compress|gzip c")]
+        public async Task<int> Compress(string? input = null, string? output = null, int level = 5, CancellationToken token = default)
         {
-            console.Error.WriteLine(application.GetHelpText());
-            return 0;
-        }
-    }
-    [Command("c", "gzcompress", Description = "compressing data as gzip format")]
-    [HelpOption]
-    class GZipCompressCommand
-    {
-        [Option("-i|--input=<INPUT_FILE>", "input file path(default: standard input)", CommandOptionType.SingleValue)]
-        public string InputFile { get; set; }
-        [Option("-o|--output=<OUTPUT_FILE_PATH>", "output file path(default: standard output)", CommandOptionType.SingleValue)]
-        public string OutputFile { get; set; }
-        [Option("-l|--level=<COMPRESSION_LEVEL>", "compression level(from 0 to 9, higher is more reducible)", CommandOptionType.SingleValue)]
-        public string CompressionLevelString { get; set; }
-        int Level => !string.IsNullOrEmpty(CompressionLevelString) && int.TryParse(CompressionLevelString, out var x) ? x : -1;
-        public int OnExecute(IConsole console)
-        {
-            try
+            using (var istm = Util.OpenInputStream(input))
+            using (var ostm = Util.OpenOutputStream(output, true))
             {
-                using (var istm = Util.OpenInputStream(InputFile))
-                using (var ostm = Util.OpenOutputStream(OutputFile, true))
+                using (var ozstm = new ICSharpCode.SharpZipLib.GZip.GZipOutputStream(ostm))
                 {
-                    using (var ozstm = new ICSharpCode.SharpZipLib.GZip.GZipOutputStream(ostm))
+                    if (level >= 0)
                     {
-                        if (Level >= 0)
-                        {
-                            ozstm.SetLevel(Level);
-                        }
-                        istm.CopyTo(ozstm);
+                        ozstm.SetLevel(level);
                     }
+                    await istm.CopyToAsync(ozstm, token);
                 }
             }
-            catch (Exception e)
-            {
-                console.Error.WriteLine($"failed gzip compression:{e}");
-                return 1;
-            }
             return 0;
         }
-    }
-    [Command("d", "gzdecompress", Description = "decompressing data as gzip format")]
-    [HelpOption]
-    class GZipDecompressCommand
-    {
-        [Option("-i|--input=<INPUT_FILE>", "input file path(default: standard input)", CommandOptionType.SingleValue)]
-        public string InputFile { get; set; }
-        [Option("-o|--output=<OUTPUT_FILE_PATH>", "output file path(default: standard output)", CommandOptionType.SingleValue)]
-        public string OutputFile { get; set; }
-        public int OnExecute(IConsole console)
+        /// <summary>
+        /// decompressing data as gzip format
+        /// </summary>
+        /// <param name="input">-i, input file path(default: standard input)</param>
+        /// <param name="output">-o, output file path(default: standard output)</param>
+        /// <returns>0 if success, other if error</returns>
+        [Command("gzip decompress|gzip d")]
+        public async Task<int> Decompress(string? input = null, string? output = null, CancellationToken token = default)
         {
-            try
+            using (var istm = Util.OpenInputStream(input))
+            using (var ostm = Util.OpenOutputStream(output, true))
             {
-                using (var istm = Util.OpenInputStream(InputFile))
-                using (var ostm = Util.OpenOutputStream(OutputFile, true))
+                using (var izstm = new GZipInputStream(istm))
                 {
-                    using (var izstm = new GZipInputStream(istm))
-                    {
-                        izstm.CopyTo(ostm);
-                    }
+                    await izstm.CopyToAsync(ostm, token);
                 }
             }
-            catch (Exception e)
-            {
-                console.Error.WriteLine($"failed gzip decompression:{e}");
-                return 1;
-            }
             return 0;
         }
+
     }
 }

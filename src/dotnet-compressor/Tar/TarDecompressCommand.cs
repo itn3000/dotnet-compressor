@@ -4,46 +4,35 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Linq;
-using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.FileSystemGlobbing;
 using Microsoft.Extensions.FileSystemGlobbing.Abstractions;
 using ICSharpCode.SharpZipLib.GZip;
 using ICSharpCode.SharpZipLib.Tar;
 using ICSharpCode.SharpZipLib.BZip2;
 using SharpCompress.Compressors.LZMA;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace dotnet_compressor.Tar
 {
-    [Command("d", "decompress", "decompresstar", Description = "extracting tar archive")]
-    [HelpOption]
     class TarDecompressCommand
     {
-        [Option("-o|--output=<OUTPUT_DIRECTORY>", "output directory(create if not exists)", CommandOptionType.SingleValue)]
-        public string OutputDirectory { get; set; }
-        [Option("-i|--input=<INPUT_FILE_PATH>", "input file path(if not specified, using stdin)", CommandOptionType.SingleValue)]
-        public string InputPath { get; set; }
+        public string? OutputDirectory { get; set; }
+        public string? InputPath { get; set; }
 
-        [Option("--include", "pattern of extracting files(default: \"**/*\")", CommandOptionType.MultipleValue)]
-        public string[] Includes { get; set; }
-        [Option("--exclude", "pattern of extracting files(default: none)", CommandOptionType.MultipleValue)]
-        public string[] Excludes { get; set; }
-        [Option("-e|--encoding=<ENCODING_NAME>", "filename encoding in tar archive(default: utf-8)", CommandOptionType.SingleValue)]
-        public string FileNameEncoding { get; set; }
-        [Option("-l|--list", "list files only", CommandOptionType.NoValue)]
-        public bool ListOnly { get; set; }
-        [Option("--replace-from=<REGEXP>", "replace filename regexp pattern", CommandOptionType.SingleValue)]
-        public string ReplaceFrom { get; set; }
-        [Option("--replace-to=<REPLACE_TO>", "replace filename destination regexp, backreference is allowed by '\\[number]'", CommandOptionType.SingleValue)]
-        public string ReplaceTo { get; set; }
-        [Option("-c|--compression-format=<COMPRESSION_FORMAT>", "decompress before tar extraction(possible values: gzip, bzip2, lzip)", CommandOptionType.SingleValue)]
-        public string CompressionFormat { get; set; }
-        [Option("-v|--verbose", "", CommandOptionType.NoValue)]
-        public bool Verbose { get; set; }
+        public string[]? Includes { get; set; }
+        public string[]? Excludes { get; set; }
+        public string? FileNameEncoding { get; set; }
+        public bool ListOnly { get; set; } = false;
+        public string? ReplaceFrom { get; set; }
+        public string? ReplaceTo { get; set; }
+        public string? CompressionFormat { get; set; }
+        public bool Verbose { get; set; } = false;
         void ExtractFileEntry(TarInputStream tstm, string outdir, string entryKey, IConsole console, TarEntry entry)
         {
             var destfi = new FileInfo(Path.Combine(outdir, entryKey));
             console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}({entry.TarHeader.TypeFlag})");
-            if (!destfi.Directory.Exists)
+            if (destfi.Directory != null && !destfi.Directory.Exists)
             {
                 destfi.Directory.Create();
             }
@@ -77,8 +66,9 @@ namespace dotnet_compressor.Tar
                 destfi.UnixFileMode = (UnixFileMode)(entry.TarHeader.Mode & 0xfff);
             }
         }
-        public int OnExecute(IConsole console)
+        public async Task<int> OnExecute(IConsole console, CancellationToken token)
         {
+            await Task.Yield();
             try
             {
                 var enc = Util.GetEncodingFromName(FileNameEncoding, Encoding.UTF8);
@@ -153,7 +143,7 @@ namespace dotnet_compressor.Tar
             {
                 console.Error.WriteLine($"extracting {entry.Name} to {destfi.FullName}({entry.TarHeader.TypeFlag})");
             }
-            if (!destfi.Directory.Exists)
+            if (destfi.Directory != null && !destfi.Directory.Exists)
             {
                 destfi.Directory.Create();
             }
