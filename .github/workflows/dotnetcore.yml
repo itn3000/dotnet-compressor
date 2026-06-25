@@ -21,9 +21,9 @@ jobs:
     env:
       CppCompilerAndLinker: ${{ matrix.linker }}
     steps:
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v7
     - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: |
           10.0.x
@@ -39,7 +39,7 @@ jobs:
       run: "dotnet run build.cs -- \"--Configuration=Release\" \"--Target=NuGet.Push.GitHub\" \"--Username=itn3000\" \"--Password=${{ secrets.GITHUB_TOKEN }}\""
       if: matrix.imagetype == 'windows' && endsWith(github.ref, 'master')
     - name: collect nuget package as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: nupkg-${{matrix.rid}}
         path: dist/Release/nupkg
@@ -56,7 +56,7 @@ jobs:
       run: strip dist/native/Release/${{matrix.rid}}/dcomp
       if: matrix.imagetype != 'windows'
     - name: collect native binary as artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: bin-${{matrix.rid}}
         path: dist/native/Release/${{matrix.rid}}
@@ -65,22 +65,22 @@ jobs:
     needs: ["build"]
     steps:
       - name: downloading nuget package
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: "nupkg-win-x64"
           path: nupkg
       - name: downloading win-x64 binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: "bin-win-x64"
           path: win-x64
       - name: downloading linux-x64 binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: "bin-linux-x64"
           path: linux-x64
       - name: downloading osx-x64 binary
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: "bin-osx-x64"
           path: osx-x64
