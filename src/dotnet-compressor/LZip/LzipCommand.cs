@@ -22,7 +22,7 @@ namespace dotnet_compressor
             using (var istm = Util.OpenInputStream(input))
             using (var ostm = Util.OpenOutputStream(output, true))
             {
-                using (var ozstm = new LZipStream(ostm, CompressionMode.Compress))
+                using (var ozstm = await LZipStream.CreateAsync(ostm, CompressionMode.Compress, cancellationToken: token))
                 {
                     await istm.CopyToAsync(ozstm, token);
                 }
@@ -42,7 +42,7 @@ namespace dotnet_compressor
             using (var istm = Util.OpenInputStream(input))
             using (var ostm = Util.OpenOutputStream(output, true))
             {
-                using (var izstm = new LZipStream(istm, CompressionMode.Decompress))
+                using (var izstm = await LZipStream.CreateAsync(istm, CompressionMode.Decompress, cancellationToken: token))
                 {
                     await izstm.CopyToAsync(ostm, token);
                 }

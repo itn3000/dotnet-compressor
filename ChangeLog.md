@@ -1,3 +1,6 @@
+* 4.0.1
+    * fix bug which zero size file created if Size of zip entry is -1
+    * migrate from Cake.Tool to Cake.Sdk based build system
 * 4.0.0
     * update TargetFramework to net10.0
 * 3.1.0

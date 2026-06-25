@@ -1,13 +1,17 @@
+#!/usr/bin/env dotnet
+// for shebang
+#:sdk Cake.Sdk
+
+#:include nativetest.cs
+#:include nuget.cs
+#:include t4.cs
+
 var Configuration = Argument("Configuration", "Debug");
 var Target = Argument("Target", "Default");
 var Runtime = Argument("Runtime", "");
 var VersionSuffix = Argument("VersionSuffix", "");
 var IsRelease = HasArgument("IsRelease");
 const string DefaultTargetFramework = "net10.0";
-
-#load "nativetest.cake"
-#load "nuget.cake"
-#load "t4.cake"
 
 Setup(ctx =>
 {
@@ -73,4 +77,7 @@ Task("Publish")
         };
         DotNetPublish(File("src/dotnet-compressor/dotnet-compressor.csproj"), setting);
     });
+AddNativeTasks();
+AddNugetTasks();
+AddT4Tasks();
 RunTarget(Target);

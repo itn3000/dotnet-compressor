@@ -47,7 +47,7 @@ namespace dotnet_compressor.Zip
             }
             return matcher;
         }
-        void ExtractFileEntry(ZipInputStream zstm, ZipEntry entry, string outdir, IConsole console, byte[] buf)
+        async Task ExtractFileEntry(ZipInputStream zstm, ZipEntry entry, string outdir, IConsole console, byte[] buf, CancellationToken ct)
         {
             var entryName = !string.IsNullOrEmpty(ReplaceFrom) && !string.IsNullOrEmpty(ReplaceTo) ?
                 Regex.Replace(entry.Name, ReplaceFrom, ReplaceTo) : entry.Name;
@@ -64,26 +64,18 @@ namespace dotnet_compressor.Zip
 
             using (var ofstm = File.Create(fi.FullName))
             {
-                if (entry.Size >= -1)
+                if (entry.Size > -1)
                 {
                     while (totalread < entry.Size)
                     {
-                        var bytesread = zstm.Read(buf, 0, (int)Math.Min(entry.Size - totalread, buf.Length));
-                        ofstm.Write(buf, 0, bytesread);
+                        var bytesread = await zstm.ReadAsync(buf, 0, (int)Math.Min(entry.Size - totalread, buf.Length), ct);
+                        await ofstm.WriteAsync(buf, 0, bytesread, ct);
                         totalread += bytesread;
                     }
                 }
                 else
                 {
-                    while (true)
-                    {
-                        var bytesread = zstm.Read(buf, 0, buf.Length);
-                        ofstm.Write(buf, 0, bytesread);
-                        if (bytesread < buf.Length)
-                        {
-                            break;
-                        }
-                    }
+                    await zstm.CopyToAsync(ofstm, ct);
                 }
             }
             if (!OperatingSystem.IsWindows() && entry.HostSystem == Constants.HostUnix)
@@ -128,7 +120,7 @@ namespace dotnet_compressor.Zip
                     }
                     else if (entry.IsFile)
                     {
-                        ExtractFileEntry(zstm, entry, outdir, console, buf);
+                        await ExtractFileEntry(zstm, entry, outdir, console, buf, token);
                     }
                 }
             }

@@ -255,11 +255,11 @@ namespace dotnet_compressor.Tar
             {
                 if (direction == TarStreamDirection.Input)
                 {
-                    return new LZipStream(stm, SharpCompress.Compressors.CompressionMode.Decompress);
+                    return LZipStream.Create(stm, SharpCompress.Compressors.CompressionMode.Decompress);
                 }
                 else
                 {
-                    return new LZipStream(stm, SharpCompress.Compressors.CompressionMode.Compress);
+                    return LZipStream.Create(stm, SharpCompress.Compressors.CompressionMode.Compress);
                 }
             }
             else
