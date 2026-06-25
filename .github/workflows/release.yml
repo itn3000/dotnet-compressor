@@ -64,6 +64,7 @@ jobs:
           - rid: win-x64
     permissions:
       contents: write
+    environment: release
     steps:
       - uses: actions/checkout@v7
       - name: downloading nuget package
@@ -101,6 +102,7 @@ jobs:
           - rid: linux-x64
     permissions:
       contents: write
+    environment: release
     steps:
       - uses: actions/checkout@v7
       - name: downloading ${{matrix.rid}} binary
@@ -127,6 +129,7 @@ jobs:
           - rid: osx-x64
     permissions:
       contents: write
+    environment: release
     steps:
       - uses: actions/checkout@v7
       - name: downloading ${{matrix.rid}} binary
